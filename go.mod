@@ -11,4 +11,6 @@ require (
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.16.0
+	google.golang.org/grpc v1.38.0
+	google.golang.org/protobuf v1.26.0
 )
