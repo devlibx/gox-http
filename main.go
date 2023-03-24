@@ -51,9 +51,9 @@ apis:
 func main() {
 	// run perf test
 	if true {
-		perfMainWithGoxHttp()
+		// perfMainWithGoxHttp()
 		// perfMainWithResty()
-		return
+		// return
 	}
 
 	cf := gox.NewCrossFunction()
