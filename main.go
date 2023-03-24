@@ -7,7 +7,12 @@ import (
 	"github.com/devlibx/gox-base/serialization"
 	goxHttpApi "github.com/devlibx/gox-http/api"
 	"github.com/devlibx/gox-http/command"
+	"github.com/devlibx/gox-http/example/perf/helper"
+	"github.com/go-resty/resty/v2"
+	dwMetric "github.com/rcrowley/go-metrics"
 	"log"
+	"os"
+	"time"
 )
 
 // Here you can define your own configuration
@@ -36,9 +41,20 @@ apis:
     server: testServer
     timeout: 10
     concurrency: 3 
+  delay_10_ms:
+    path: /delay/10_ms
+    server: testServer
+    timeout: 100
+    concurrency: 300
 `
 
 func main() {
+	// run perf test
+	if true {
+		perfMainWithGoxHttp()
+		// perfMainWithResty()
+		return
+	}
 
 	cf := gox.NewCrossFunction()
 
@@ -99,4 +115,128 @@ func main() {
 		fmt.Println(serialization.Stringify(response.Response))
 		// {some json response ...}
 	}
+}
+
+func perfMainWithGoxHttp() {
+	counter := dwMetric.NewCounter()
+	errCounter := dwMetric.NewCounter()
+	dwMetric.Register("success", counter)
+	dwMetric.Register("error", errCounter)
+
+	// Start the mock server
+	ctx, cancelFunc := context.WithTimeout(context.TODO(), time.Duration(10*time.Second))
+	defer cancelFunc()
+	overChannel, err := helper.StartMockServer(ctx, 9123)
+	if err != nil {
+		panic(err)
+	}
+	_ = overChannel
+
+	cf := gox.NewCrossFunction()
+
+	// Read config and
+	config := command.Config{}
+	err = serialization.ReadYamlFromString(httpConfig, &config)
+	if err != nil {
+		log.Println("got error in reading config", err)
+		return
+	}
+
+	// Setup goHttp context
+	goxHttpCtx, err := goxHttpApi.NewGoxHttpContext(cf, &config)
+	if err != nil {
+		log.Println("got error in creating gox http context config", err)
+		return
+	}
+
+	for i := 1; i < 100; i++ {
+		go func() {
+			for {
+				select {
+				case <-ctx.Done():
+				// No-OP
+				default:
+					makeGoxHttpCall(goxHttpCtx, counter, errCounter)
+				}
+			}
+		}()
+	}
+
+	go func() {
+		go dwMetric.Log(dwMetric.DefaultRegistry, 1*time.Second, log.New(os.Stdout, "metrics: ", log.Lmicroseconds))
+	}()
+
+	go func() {
+		time.Sleep(10 * time.Second)
+		cancelFunc()
+	}()
+	<-overChannel
+}
+
+func makeGoxHttpCall(goxHttpCtx goxHttpApi.GoxHttpContext, counter dwMetric.Counter, errCounter dwMetric.Counter) {
+	request := command.NewGoxRequestBuilder("delay_10_ms").
+		WithContentTypeJson().
+		WithPathParam("id", 1).
+		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
+		Build()
+	response, err := goxHttpCtx.Execute(context.Background(), "delay_10_ms", request)
+	if err == nil {
+		counter.Inc(1)
+	} else {
+		errCounter.Inc(1)
+	}
+	_ = response
+	// fmt.Println(response)
+}
+
+func perfMainWithResty() {
+	counter := dwMetric.NewCounter()
+	errCounter := dwMetric.NewCounter()
+	dwMetric.Register("success", counter)
+	dwMetric.Register("error", errCounter)
+
+	// Start the mock server
+	ctx, cancelFunc := context.WithTimeout(context.TODO(), time.Duration(100*time.Second))
+	defer cancelFunc()
+	overChannel, err := helper.StartMockServer(ctx, 9123)
+	if err != nil {
+		panic(err)
+	}
+	_ = overChannel
+
+	restyClient := resty.New()
+	restyClient.SetHostURL("http://localhost:9123")
+
+	for i := 1; i < 100; i++ {
+		go func() {
+			for {
+				select {
+				case <-ctx.Done():
+				// No-OP
+				default:
+					makeRestyCall(restyClient, counter, errCounter)
+				}
+			}
+		}()
+	}
+
+	go func() {
+		go dwMetric.Log(dwMetric.DefaultRegistry, 1*time.Second, log.New(os.Stdout, "metrics: ", log.Lmicroseconds))
+	}()
+
+	go func() {
+		time.Sleep(10 * time.Second)
+		cancelFunc()
+	}()
+	<-overChannel
+}
+
+func makeRestyCall(restyClient *resty.Client, counter dwMetric.Counter, errCounter dwMetric.Counter) {
+	res, err := restyClient.R().Get("/delay/10_ms")
+	if err == nil {
+		counter.Inc(1)
+	} else {
+		errCounter.Inc(1)
+	}
+	_ = res
 }
