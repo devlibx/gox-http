@@ -53,6 +53,11 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			if s.ConnectionRequestTimeout, err = connectionRequestTimeout.GetInt(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing connection_request_timeout property for server=%s", name)
 			}
+			if m, ok := valueMap["properties"]; ok {
+				if _m, ok := m.(map[string]interface{}); ok {
+					s.Properties = _m
+				}
+			}
 		}
 	}
 

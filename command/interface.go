@@ -19,11 +19,12 @@ type Servers map[string]*Server
 // ****************************************************************************************
 type Server struct {
 	Name                     string
-	Host                     string `yaml:"host"`
-	Port                     int    `yaml:"port"`
-	Https                    bool   `yaml:"https"`
-	ConnectTimeout           int    `yaml:"connect_timeout"`
-	ConnectionRequestTimeout int    `yaml:"connection_request_timeout"`
+	Host                     string                 `yaml:"host"`
+	Port                     int                    `yaml:"port"`
+	Https                    bool                   `yaml:"https"`
+	ConnectTimeout           int                    `yaml:"connect_timeout"`
+	ConnectionRequestTimeout int                    `yaml:"connection_request_timeout"`
+	Properties               map[string]interface{} `yaml:"properties"`
 }
 
 // List of all APIs
