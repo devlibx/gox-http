@@ -12,14 +12,14 @@ import (
 
 var ErrCommandNotRegisteredForApi = errors.New("api not found")
 
-// Interface to be used by external clients
+// GoxHttpContext is the interface to be used by external clients
 type GoxHttpContext interface {
 	ReloadApi(apiToReload string) error
 	Execute(ctx context.Context, api string, request *command.GoxRequest) (*command.GoxResponse, error)
 	ExecuteAsync(ctx context.Context, api string, request *command.GoxRequest) chan *command.GoxResponse
 }
 
-// Create a new http context to be used
+// NewGoxHttpContext - Create a new http context to be used
 func NewGoxHttpContext(cf gox.CrossFunction, config *command.Config) (GoxHttpContext, error) {
 	c := &goxHttpContextImpl{
 		CrossFunction: cf,

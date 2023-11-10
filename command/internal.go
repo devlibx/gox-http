@@ -62,6 +62,10 @@ func (c *Config) SetupDefaults() {
 				v.acceptableCodes = append(v.acceptableCodes, 200)
 				v.acceptableCodes = append(v.acceptableCodes, 201)
 			}
+
+			if v.Headers == nil {
+				v.Headers = map[string]string{}
+			}
 		}
 	}
 }

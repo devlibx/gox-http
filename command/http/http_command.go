@@ -9,6 +9,7 @@ import (
 	"github.com/devlibx/gox-http/command"
 	"github.com/go-resty/resty/v2"
 	_ "github.com/go-resty/resty/v2"
+	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 	"net"
@@ -162,6 +163,17 @@ func (h *HttpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 	// inject opentracing in the outgoing request
 	tracer := opentracing.GlobalTracer()
 	_ = tracer.Inject(sp.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+
+	// Set default headers
+	if h.api.Headers != nil {
+		for name, value := range h.api.Headers {
+			if name == "__UNIQUE_UUID__" {
+				r.SetHeader(name, uuid.New().String())
+			} else {
+				r.SetHeader(name, value)
+			}
+		}
+	}
 
 	// Set header
 	if request.Header != nil {

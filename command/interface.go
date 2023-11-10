@@ -36,16 +36,17 @@ type Apis map[string]*Api
 // ****************************************************************************************
 type Api struct {
 	Name                   string
-	Method                 string `yaml:"method"`
-	Path                   string `yaml:"path"`
-	Server                 string `yaml:"server"`
-	Timeout                int    `yaml:"timeout"`
-	Concurrency            int    `yaml:"concurrency"`
-	QueueSize              int    `yaml:"queue_size"`
-	Async                  bool   `yaml:"async"`
-	AcceptableCodes        string `yaml:"acceptable_codes"`
-	RetryCount             int    `yaml:"retry_count"`
-	InitialRetryWaitTimeMs int    `yaml:"retry_initial_wait_time_ms"`
+	Method                 string            `yaml:"method"`
+	Path                   string            `yaml:"path"`
+	Server                 string            `yaml:"server"`
+	Timeout                int               `yaml:"timeout"`
+	Concurrency            int               `yaml:"concurrency"`
+	QueueSize              int               `yaml:"queue_size"`
+	Async                  bool              `yaml:"async"`
+	AcceptableCodes        string            `yaml:"acceptable_codes"`
+	RetryCount             int               `yaml:"retry_count"`
+	InitialRetryWaitTimeMs int               `yaml:"retry_initial_wait_time_ms"`
+	Headers                map[string]string `yaml:"headers"`
 	acceptableCodes        []int
 	DisableHystrix         bool
 }
