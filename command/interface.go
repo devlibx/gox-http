@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/devlibx/gox-base"
+	"github.com/devlibx/gox-base/serialization"
 	"net/http"
 )
 
@@ -98,12 +99,12 @@ type ResponseBuilder interface {
 }
 
 type GoxRequest struct {
-	Header          http.Header
-	PathParam       MultivaluedMap
-	QueryParam      MultivaluedMap
-	Body            interface{}
-	BodyProvider    BodyProvider
-	ResponseBuilder ResponseBuilder
+	Header          http.Header     `json:"-"`
+	PathParam       MultivaluedMap  `json:"path_param,omitempty"`
+	QueryParam      MultivaluedMap  `json:"query_param,omitempty"`
+	Body            interface{}     `json:"body"`
+	BodyProvider    BodyProvider    `json:"-"`
+	ResponseBuilder ResponseBuilder `json:"-"`
 }
 
 type GoxResponse struct {
@@ -144,5 +145,5 @@ type Command interface {
 }
 
 func (req *GoxRequest) String() string {
-	return fmt.Sprintf("")
+	return serialization.StringifySuppressError(req, "{}")
 }

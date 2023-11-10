@@ -88,19 +88,18 @@ func (h *HttpCommand) internalExecute(ctx context.Context, request *command.GoxR
 	sp, ctxWithSpan := DefaultStartSpanFromContextFunc(ctx, h.api.Name)
 	defer sp.Finish()
 
-	h.logger.Debug("got request to execute", zap.Stringer("request", request))
-
 	var response *resty.Response
 
 	// Build request with all parameters
 	r, err := h.buildRequest(ctxWithSpan, request, sp)
 	if err != nil {
+		h.logger.Debug("got request to execute (err)", zap.Stringer("request", request))
 		return nil, err
 	}
 
 	// Create the url to call
 	finalUrlToRequest := h.api.GetPath(h.server)
-	h.logger.Debug("url to use", zap.String("url", finalUrlToRequest))
+	h.logger.Debug("got request to execute", zap.Stringer("request", request), zap.String("url", finalUrlToRequest))
 
 	start := time.Now()
 	switch strings.ToUpper(h.api.Method) {
