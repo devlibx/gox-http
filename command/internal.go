@@ -133,14 +133,30 @@ type goxRequestBuilder struct {
 	api     string
 }
 
+type HeaderValuePair struct {
+	Name  string
+	Value interface{}
+}
+
 func (b *goxRequestBuilder) WithContentTypeJson() *goxRequestBuilder {
 	return b.WithHeader("content-type", "application/json")
 }
+
 func (b *goxRequestBuilder) WithHeader(name string, value interface{}) *goxRequestBuilder {
 	if b.request.Header == nil {
 		b.request.Header = http.Header{}
 	}
 	b.request.Header.Add(name, serialization.StringifySuppressError(value, ""))
+	return b
+}
+
+func (b *goxRequestBuilder) WithHeaders(headers ...HeaderValuePair) *goxRequestBuilder {
+	if b.request.Header == nil {
+		b.request.Header = http.Header{}
+	}
+	for _, hp := range headers {
+		b.request.Header.Add(hp.Name, serialization.StringifySuppressError(hp.Value, ""))
+	}
 	return b
 }
 
