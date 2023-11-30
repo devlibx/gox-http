@@ -111,6 +111,8 @@ func (h *HttpCommand) internalExecute(ctx context.Context, request *command.GoxR
 		response, err = r.Put(finalUrlToRequest)
 	case "DELETE":
 		response, err = r.Delete(finalUrlToRequest)
+	case "PATCH":
+		response, err = r.Patch(finalUrlToRequest)
 	}
 	end := time.Now()
 	if EnableTimeTakenByHttpCall {
