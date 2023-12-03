@@ -35,6 +35,7 @@ type HttpCommand struct {
 	server           *command.Server
 	api              *command.Api
 	logger           *zap.Logger
+	debugLogger      *zap.SugaredLogger
 	client           *resty.Client
 	setRetryFuncOnce *sync.Once
 }
@@ -93,13 +94,13 @@ func (h *HttpCommand) internalExecute(ctx context.Context, request *command.GoxR
 	// Build request with all parameters
 	r, err := h.buildRequest(ctxWithSpan, request, sp)
 	if err != nil {
-		h.logger.Debug("got request to execute (err)", zap.Stringer("request", request))
+		h.debugLogger.Debug("got request to execute (err)", zap.Stringer("request", request))
 		return nil, err
 	}
 
 	// Create the url to call
 	finalUrlToRequest := h.api.GetPath(h.server)
-	h.logger.Debug("got request to execute", zap.Stringer("request", request), zap.String("url", finalUrlToRequest))
+	h.debugLogger.Debug("got request to execute", zap.Stringer("request", request), zap.String("url", finalUrlToRequest))
 
 	start := time.Now()
 	switch strings.ToUpper(h.api.Method) {
@@ -353,6 +354,7 @@ func NewHttpCommand(cf gox.CrossFunction, server *command.Server, api *command.A
 		client:           resty.New(),
 		setRetryFuncOnce: &sync.Once{},
 	}
+	c.debugLogger = c.logger.Sugar()
 	c.client.SetAllowGetMethodPayload(true)
 	c.client.SetTimeout(time.Duration(api.Timeout) * time.Millisecond)
 	return c, nil
