@@ -166,6 +166,21 @@ func (h *HttpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 	tracer := opentracing.GlobalTracer()
 	_ = tracer.Inject(sp.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
 
+	// Set headers from service
+	if h.server.Headers != nil {
+		for name, value := range h.server.Headers {
+			if name == "__UNIQUE_UUID__" {
+				r.SetHeader(name, uuid.New().String())
+			} else {
+				if s, ok := value.(string); ok {
+					r.SetHeader(name, s)
+				} else {
+					r.SetHeader(name, serialization.StringifyOrEmptyJsonOnError(value))
+				}
+			}
+		}
+	}
+
 	// Set default headers
 	if h.api.Headers != nil {
 		for name, value := range h.api.Headers {

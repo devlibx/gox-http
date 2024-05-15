@@ -26,6 +26,7 @@ type Server struct {
 	ConnectTimeout           int                    `yaml:"connect_timeout"`
 	ConnectionRequestTimeout int                    `yaml:"connection_request_timeout"`
 	Properties               map[string]interface{} `yaml:"properties"`
+	Headers                  map[string]interface{} `yaml:"headers"`
 }
 
 // List of all APIs

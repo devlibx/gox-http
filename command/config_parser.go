@@ -58,6 +58,11 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 					s.Properties = _m
 				}
 			}
+			if m, ok := valueMap["headers"]; ok {
+				if _m, ok := m.(map[string]interface{}); ok {
+					s.Headers = _m
+				}
+			}
 		}
 	}
 
