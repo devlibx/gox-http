@@ -15,8 +15,8 @@ type GoxSuccessResponse[SuccessResp any] struct {
 	StatusCode int
 }
 
-// GoxSuccessResponseList is the typed response after successful http call and parsing response to success object
-type GoxSuccessResponseList[SuccessResp any] struct {
+// GoxSuccessListResponse is the typed response after successful http call and parsing response to success object
+type GoxSuccessListResponse[SuccessResp any] struct {
 	Body       []byte
 	Response   []SuccessResp
 	StatusCode int
@@ -68,22 +68,22 @@ func ExecuteHttp[SuccessResp any, ErrorResp any](
 	cxt context.Context,
 	goxHttpCtx GoxHttpContext,
 	request *command.GoxRequest,
-) (*GoxSuccessResponse[*SuccessResp], error) {
+) (*GoxSuccessResponse[SuccessResp], error) {
 
 	resp, err := goxHttpCtx.Execute(cxt, request)
 	if err == nil {
 
 		// If status is StatusNoContent then we will do special handling
 		if resp.StatusCode == http.StatusNoContent {
-			return &GoxSuccessResponse[*SuccessResp]{
+			return &GoxSuccessResponse[SuccessResp]{
 				StatusCode: http.StatusNoContent,
 			}, nil
 		}
 
 		// In other cases we will parse the response
-		var successResp *SuccessResp
+		var successResp SuccessResp
 		if serializationErr := serialization.JsonBytesToObject(resp.Body, &successResp); serializationErr == nil {
-			return &GoxSuccessResponse[*SuccessResp]{
+			return &GoxSuccessResponse[SuccessResp]{
 				Body:       resp.Body,
 				StatusCode: resp.StatusCode,
 				Response:   successResp,
@@ -122,27 +122,27 @@ func ExecuteHttp[SuccessResp any, ErrorResp any](
 	}
 }
 
-// ExecuteHttpList is a helper function to execute http request and parse response to success or error object
-func ExecuteHttpList[SuccessResp any, ErrorResp any](
+// ExecuteHttpListResponse is a helper function to execute http request and parse response to success or error object
+func ExecuteHttpListResponse[SuccessResp any, ErrorResp any](
 	cxt context.Context,
 	goxHttpCtx GoxHttpContext,
 	request *command.GoxRequest,
-) (*GoxSuccessResponseList[*SuccessResp], error) {
+) (*GoxSuccessListResponse[SuccessResp], error) {
 
 	resp, err := goxHttpCtx.Execute(cxt, request)
 	if err == nil {
 
 		// If status is StatusNoContent then we will do special handling
 		if resp.StatusCode == http.StatusNoContent {
-			return &GoxSuccessResponseList[*SuccessResp]{
+			return &GoxSuccessListResponse[SuccessResp]{
 				StatusCode: http.StatusNoContent,
 			}, nil
 		}
 
 		// In other cases we will parse the response
-		var successResp []*SuccessResp
+		var successResp []SuccessResp
 		if serializationErr := serialization.JsonBytesToObject(resp.Body, &successResp); serializationErr == nil {
-			return &GoxSuccessResponseList[*SuccessResp]{
+			return &GoxSuccessListResponse[SuccessResp]{
 				Body:       resp.Body,
 				StatusCode: resp.StatusCode,
 				Response:   successResp,

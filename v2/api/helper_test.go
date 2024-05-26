@@ -53,6 +53,8 @@ func (s *helperTestSuite) SetupSuite() {
 			c.Status(http.StatusInternalServerError)
 		} else if id == "GOOD_LIST" {
 			c.String(http.StatusOK, `[{"id": 1, "name":"a"}, {"id": 2, "name":"b"}]`)
+		} else if id == "GOOD_EMPTY_LIST" {
+			c.String(http.StatusOK, `[]`)
 		} else {
 			c.Status(http.StatusInternalServerError)
 		}
@@ -98,7 +100,7 @@ func (s *helperTestSuite) TestExecuteHttp_Good() {
 
 func (s *helperTestSuite) TestExecuteHttp_Good_List() {
 
-	successResponse, err := ExecuteHttpList[successListPojo, errorPojo](
+	successResponse, err := ExecuteHttpListResponse[successListPojo, errorPojo](
 		context.Background(),
 		s.goxHttpCtx,
 		command.NewGoxRequestBuilder("getPosts").
@@ -119,12 +121,30 @@ func (s *helperTestSuite) TestExecuteHttp_Good_List() {
 	assert.Equal(s.T(), "b", successResponse.Response[1].Name)
 }
 
+func (s *helperTestSuite) TestExecuteHttp_Good_Empty_List() {
+
+	successResponse, err := ExecuteHttpListResponse[successListPojo, errorPojo](
+		context.Background(),
+		s.goxHttpCtx,
+		command.NewGoxRequestBuilder("getPosts").
+			WithContentTypeJson().
+			WithPathParam("id", "GOOD_EMPTY_LIST").
+			Build())
+
+	assert.NoError(s.T(), err)
+	assert.NotNil(s.T(), successResponse)
+	assert.NotNil(s.T(), successResponse.Response)
+	assert.NotNil(s.T(), successResponse.Body)
+	assert.Equal(s.T(), http.StatusOK, successResponse.StatusCode)
+	assert.True(s.T(), len(successResponse.Response) == 0)
+}
+
 func (s *helperTestSuite) TestExecuteHttp_Good_NoContent() {
 	request := command.NewGoxRequestBuilder("getPosts").
 		WithContentTypeJson().
 		WithPathParam("id", "GOOD_NO_CONTENT").
 		Build()
-	successResponse, err := ExecuteHttp[any, any](context.Background(), s.goxHttpCtx, request)
+	successResponse, err := ExecuteHttp[any, errorPojo](context.Background(), s.goxHttpCtx, request)
 
 	assert.NoError(s.T(), err)
 	assert.NotNil(s.T(), successResponse)
