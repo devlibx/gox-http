@@ -20,7 +20,7 @@ func TestGoxHttpContext_WithNonExistingApiName(t *testing.T) {
 	goxHttpCtx, err := NewGoxHttpContext(cf, &config)
 	assert.NoError(t, err)
 
-	_, err = goxHttpCtx.Execute(context.TODO(), "badName", nil)
+	_, err = goxHttpCtx.Execute(context.TODO(), command.NewGoxRequestBuilder("t").Build())
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, ErrCommandNotRegisteredForApi))
 }

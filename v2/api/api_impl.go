@@ -23,7 +23,8 @@ type goxHttpContextImpl struct {
 	lock     *sync.Mutex
 }
 
-func (g *goxHttpContextImpl) Execute(ctx context.Context, api string, request *command.GoxRequest) (*command.GoxResponse, error) {
+func (g *goxHttpContextImpl) Execute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error) {
+	api := request.Api
 	if cmd, ok := g.commands[api]; !ok {
 		return nil, &command.GoxHttpError{
 			Err:        ErrCommandNotRegisteredForApi,

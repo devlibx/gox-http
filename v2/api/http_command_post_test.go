@@ -62,7 +62,7 @@ func Test_Post_Success(t *testing.T) {
 		WithBody(gox.StringObjectMap{"key": "value"}).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err := goxHttpCtx.Execute(ctx, "delay_timeout_10_POST", request)
+	response, err := goxHttpCtx.Execute(ctx, request)
 	assert.NoError(t, err)
 	assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
 	assert.Equal(t, "value", response.AsStringObjectMapOrEmpty().StringOrEmpty("key"))
@@ -102,7 +102,7 @@ func Test_Post_Timeout(t *testing.T) {
 		WithBody(gox.StringObjectMap{"key": "value"}).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	_, err = goxHttpCtx.Execute(ctx, "delay_timeout_10_POST", request)
+	_, err = goxHttpCtx.Execute(ctx, request)
 	assert.Error(t, err)
 	if e, ok := err.(*command.GoxHttpError); ok {
 		assert.Equal(t, "request_timeout_on_client", e.ErrorCode)
@@ -158,7 +158,7 @@ func Test_Post_With_Acceptable_Status_Code(t *testing.T) {
 		WithBody(gox.StringObjectMap{"key": "value"}).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err := goxHttpCtx.Execute(ctx, "delay_timeout_10_POST", request)
+	response, err := goxHttpCtx.Execute(ctx, request)
 	assert.NoError(t, err)
 	assert.Equal(t, 401, response.StatusCode)
 	assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
@@ -196,6 +196,6 @@ func Test_Post_With_Unacceptable_Status_Code(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	_, err = goxHttpCtx.Execute(ctx, "delay_timeout_10_POST", request)
+	_, err = goxHttpCtx.Execute(ctx, request)
 	assert.Error(t, err)
 }

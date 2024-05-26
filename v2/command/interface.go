@@ -100,6 +100,7 @@ type ResponseBuilder interface {
 }
 
 type GoxRequest struct {
+	Api             string          `json:"-"`
 	Header          http.Header     `json:"-"`
 	PathParam       MultivaluedMap  `json:"path_param,omitempty"`
 	QueryParam      MultivaluedMap  `json:"query_param,omitempty"`

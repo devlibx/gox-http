@@ -53,7 +53,7 @@ func Test_Hystrix_Update(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err := goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+	response, err := goxHttpCtx.Execute(ctx, request)
 	assert.NoError(t, err)
 	assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
 	assert.Equal(t, "/delay", response.AsStringObjectMapOrEmpty().StringOrEmpty("url"))
@@ -71,7 +71,7 @@ func Test_Hystrix_Update(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err = goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+	response, err = goxHttpCtx.Execute(ctx, request)
 	assert.NoError(t, err)
 	assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
 	assert.Equal(t, "/delay_new", response.AsStringObjectMapOrEmpty().StringOrEmpty("url"))
@@ -97,7 +97,7 @@ func Test_Hystrix_Update(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err = goxHttpCtx.Execute(ctx, "new_api", request)
+	response, err = goxHttpCtx.Execute(ctx, request)
 	assert.NoError(t, err)
 	assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
 	assert.Equal(t, "/bad_new", response.AsStringObjectMapOrEmpty().StringOrEmpty("url"))

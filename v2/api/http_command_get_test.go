@@ -49,7 +49,7 @@ func Test_Get_Success(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err := goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+	response, err := goxHttpCtx.Execute(ctx, request)
 	assert.NoError(t, err)
 	assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
 }
@@ -87,7 +87,7 @@ func Test_Get_Timeout(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	_, err = goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+	_, err = goxHttpCtx.Execute(ctx, request)
 	assert.Error(t, err)
 	if e, ok := err.(*command.GoxHttpError); ok {
 		assert.Equal(t, "request_timeout_on_client", e.ErrorCode)
@@ -131,7 +131,7 @@ func Test_Get_With_Acceptable_Status_Code(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err := goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+	response, err := goxHttpCtx.Execute(ctx, request)
 	assert.NoError(t, err)
 	assert.Equal(t, 401, response.StatusCode)
 	assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
@@ -169,7 +169,7 @@ func Test_Get_With_Unacceptable_Status_Code(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	_, err = goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+	_, err = goxHttpCtx.Execute(ctx, request)
 	assert.Error(t, err)
 }
 
@@ -207,7 +207,7 @@ func Test_Get_With_Retry(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err := goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+	response, err := goxHttpCtx.Execute(ctx, request)
 	assert.Error(t, err)
 	assert.Equal(t, int32(config.Apis["delay_timeout_10"].RetryCount+1), count)
 	assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
@@ -253,7 +253,7 @@ func Test_Get_With_Retry_With_Finally_Success(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err := goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+	response, err := goxHttpCtx.Execute(ctx, request)
 	assert.NoError(t, err)
 	assert.Equal(t, int32(3), count)
 	assert.Equal(t, http.StatusOK, response.StatusCode)
@@ -297,7 +297,7 @@ func Test_Get_With_Retry_Non_2xx_But_Acceptable_Code(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err := goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+	response, err := goxHttpCtx.Execute(ctx, request)
 	assert.NoError(t, err)
 	assert.Equal(t, int32(1), count)
 	assert.Equal(t, http.StatusUnauthorized, response.StatusCode)

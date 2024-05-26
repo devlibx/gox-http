@@ -217,7 +217,7 @@ func (b *goxRequestBuilder) Build() *GoxRequest {
 
 func NewGoxRequestBuilder(api string) *goxRequestBuilder {
 	return &goxRequestBuilder{
-		request: &GoxRequest{},
+		request: &GoxRequest{Api: api},
 		api:     api,
 	}
 }

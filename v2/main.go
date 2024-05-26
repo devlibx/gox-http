@@ -87,7 +87,7 @@ func main() {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err := goxHttpCtx.Execute(context.Background(), "getPosts", request)
+	response, err := goxHttpCtx.Execute(context.Background(), request)
 	if err != nil {
 
 		// Error details can be extracted from *command.GoxHttpError
@@ -179,7 +179,7 @@ func makeGoxHttpCall(goxHttpCtx goxHttpApi.GoxHttpContext, counter dwMetric.Coun
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err := goxHttpCtx.Execute(context.Background(), "delay_10_ms", request)
+	response, err := goxHttpCtx.Execute(context.Background(), request)
 	if err == nil {
 		counter.Inc(1)
 	} else {
