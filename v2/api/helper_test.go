@@ -56,6 +56,8 @@ func (s *helperTestSuite) SetupSuite() {
 			c.String(http.StatusOK, `[{"id":1, "name":"user_1"}, {"id":2, "name":"user_2"}]`)
 		} else if id == "GOOD_EMPTY_LIST" {
 			c.String(http.StatusOK, `[]`)
+		} else if id == "NOT_FOUND_WITH_NO_BODY" {
+			c.Status(http.StatusNotFound)
 		} else {
 			c.Status(http.StatusInternalServerError)
 		}
@@ -168,6 +170,51 @@ func (s *helperTestSuite) TestExecuteHttp_Bad_NotFound() {
 	assert.NotNil(s.T(), errorResponse)
 	assert.True(s.T(), errorResponsePayloadExists)
 	assert.Equal(s.T(), "some error", errorResponse.Response.Status)
+	assert.Equal(s.T(), http.StatusNotFound, errorResponse.StatusCode)
+}
+
+// Test case to check if we can get error without error pojo
+// We will get the error as map[string]interface{}
+func (s *helperTestSuite) TestExecuteHttp_Bad_NotFound_With_NoErrorPojo() {
+	request := command.NewGoxRequestBuilder("getPosts").
+		WithContentTypeJson().
+		WithPathParam("id", "NOT_FOUND").
+		Build()
+	successResponse, err := ExecuteHttp[successPojo, any](context.Background(), s.goxHttpCtx, request)
+
+	assert.Error(s.T(), err)
+	assert.Nil(s.T(), successResponse)
+	errorResponse, errorResponsePayloadExists, ok := ExtractError[any](err)
+	assert.True(s.T(), ok)
+	assert.NotNil(s.T(), errorResponse)
+	assert.True(s.T(), errorResponsePayloadExists)
+	if asMap, ok := errorResponse.Response.(map[string]interface{}); ok {
+		assert.Equal(s.T(), "some error", asMap["status"])
+	} else {
+		assert.Fail(s.T(), "we should have got it as map")
+	}
+	assert.Equal(s.T(), http.StatusNotFound, errorResponse.StatusCode)
+}
+
+// Test case to check if we can get error without error pojo
+// We will get the error as map[string]interface{}
+func (s *helperTestSuite) TestExecuteHttp_Bad_NotFound_With_NoErrorPojo_AndNoBodyFromApi() {
+	request := command.NewGoxRequestBuilder("getPosts").
+		WithContentTypeJson().
+		WithPathParam("id", "NOT_FOUND_WITH_NO_BODY").
+		Build()
+	successResponse, err := ExecuteHttp[successPojo, any](context.Background(), s.goxHttpCtx, request)
+
+	assert.Error(s.T(), err)
+	assert.Nil(s.T(), successResponse)
+	errorResponse, errorResponsePayloadExists, ok := ExtractError[any](err)
+	assert.True(s.T(), ok)
+	assert.NotNil(s.T(), errorResponse)
+	assert.False(s.T(), errorResponsePayloadExists)
+	asMap, ok := errorResponse.Response.(map[string]interface{})
+	assert.False(s.T(), ok)
+	assert.Nil(s.T(), asMap)
+
 	assert.Equal(s.T(), http.StatusNotFound, errorResponse.StatusCode)
 }
 
