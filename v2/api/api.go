@@ -16,7 +16,6 @@ var ErrCommandNotRegisteredForApi = errors.New("api not found")
 type GoxHttpContext interface {
 	ReloadApi(apiToReload string) error
 	Execute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error)
-	ExecuteAsync(ctx context.Context, api string, request *command.GoxRequest) chan *command.GoxResponse
 }
 
 // NewGoxHttpContext - Create a new http context to be used

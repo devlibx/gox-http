@@ -50,20 +50,6 @@ func (mr *MockGoxHttpContextMockRecorder) Execute(ctx, request interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockGoxHttpContext)(nil).Execute), ctx, request)
 }
 
-// ExecuteAsync mocks base method.
-func (m *MockGoxHttpContext) ExecuteAsync(ctx context.Context, api string, request *command.GoxRequest) chan *command.GoxResponse {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExecuteAsync", ctx, api, request)
-	ret0, _ := ret[0].(chan *command.GoxResponse)
-	return ret0
-}
-
-// ExecuteAsync indicates an expected call of ExecuteAsync.
-func (mr *MockGoxHttpContextMockRecorder) ExecuteAsync(ctx, api, request interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteAsync", reflect.TypeOf((*MockGoxHttpContext)(nil).ExecuteAsync), ctx, api, request)
-}
-
 // ReloadApi mocks base method.
 func (m *MockGoxHttpContext) ReloadApi(apiToReload string) error {
 	m.ctrl.T.Helper()
