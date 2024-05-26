@@ -45,7 +45,7 @@ func (s *helperTestSuite) SetupSuite() {
 	s.R.GET("/posts/:id", func(c *gin.Context) {
 		id := c.Param("id")
 		if id == "GOOD" {
-			c.String(http.StatusOK, `{"id":1, "slug":"lorem-ipsum", "url":"https://jsonplaceholder.org/posts/lorem-ipsum", "title":"Lorem ipsum dolor sit amet, consectetur adipiscing elit.", "content":"Ante taciti nulla sit libero orci sed nam. Sagittis suspendisse gravida ornare iaculis cras nullam varius ac ullamcorper. Nunc euismod hendrerit netus ligula aptent potenti. Aliquam volutpat nibh scelerisque at. Ipsum molestie phasellus euismod sagittis mauris, erat ut. Gravida morbi, sagittis blandit quis ipsum mi mus semper dictum amet himenaeos. Accumsan non congue praesent interdum habitasse turpis orci. Ante curabitur porttitor ullamcorper sagittis sem donec, inceptos cubilia venenatis ac. Augue fringilla sodales in ullamcorper enim curae; rutrum hac in sociis! Scelerisque integer varius et euismod aenean nulla. Quam habitasse risus nullam enim. Ultrices etiam viverra mattis aliquam? Consectetur velit vel volutpat eget curae;. Volutpat class mus elementum pulvinar! Nisi tincidunt volutpat consectetur. Primis morbi pulvinar est montes diam himenaeos duis elit est orci. Taciti sociis aptent venenatis dui malesuada dui justo faucibus primis consequat volutpat. Rhoncus ante purus eros nibh, id et hendrerit pellentesque scelerisque vehicula sollicitudin quam. Hac class vitae natoque tortor dolor dui praesent suspendisse. Vehicula euismod tincidunt odio platea aenean habitasse neque ad proin. Bibendum phasellus enim fames risus eget felis et sem fringilla etiam. Integer.","image":"https://dummyimage.com/800x430/FFFFFF/lorem-ipsum.png&text=jsonplaceholder.org", "thumbnail":"https://dummyimage.com/200x200/FFFFFF/lorem-ipsum.png&text=jsonplaceholder.org", "status":"published", "category":"lorem", "publishedAt":"04/02/2023 13:25:21","updatedAt":"14/03/2023 17:22:20", "userId":1}`)
+			c.String(http.StatusOK, `{"id":1, "name":"user_1"}`)
 		} else if id == "GOOD_NO_CONTENT" {
 			c.Status(http.StatusNoContent)
 		} else if id == "NOT_FOUND" {
@@ -53,7 +53,7 @@ func (s *helperTestSuite) SetupSuite() {
 		} else if id == "ERROR" {
 			c.Status(http.StatusInternalServerError)
 		} else if id == "GOOD_LIST" {
-			c.String(http.StatusOK, `[{"id": 1, "name":"a"}, {"id": 2, "name":"b"}]`)
+			c.String(http.StatusOK, `[{"id":1, "name":"user_1"}, {"id":2, "name":"user_2"}]`)
 		} else if id == "GOOD_EMPTY_LIST" {
 			c.String(http.StatusOK, `[]`)
 		} else {
@@ -96,12 +96,12 @@ func (s *helperTestSuite) TestExecuteHttp_Good() {
 	assert.NotNil(s.T(), successResponse.Response)
 	assert.NotNil(s.T(), successResponse.Body)
 	assert.Equal(s.T(), http.StatusOK, successResponse.StatusCode)
-	assert.Equal(s.T(), "lorem-ipsum", successResponse.Response.Slug)
+	assert.Equal(s.T(), "user_1", successResponse.Response.Name)
 }
 
 func (s *helperTestSuite) TestExecuteHttp_Good_List() {
 
-	successResponse, err := ExecuteHttpListResponse[successListPojo, errorPojo](
+	successResponse, err := ExecuteHttpListResponse[successPojo, errorPojo](
 		context.Background(),
 		s.goxHttpCtx,
 		command.NewGoxRequestBuilder("getPosts").
@@ -117,14 +117,14 @@ func (s *helperTestSuite) TestExecuteHttp_Good_List() {
 
 	assert.True(s.T(), len(successResponse.Response) == 2)
 	assert.Equal(s.T(), 1, successResponse.Response[0].Id)
-	assert.Equal(s.T(), "a", successResponse.Response[0].Name)
+	assert.Equal(s.T(), "user_1", successResponse.Response[0].Name)
 	assert.Equal(s.T(), 2, successResponse.Response[1].Id)
-	assert.Equal(s.T(), "b", successResponse.Response[1].Name)
+	assert.Equal(s.T(), "user_2", successResponse.Response[1].Name)
 }
 
 func (s *helperTestSuite) TestExecuteHttp_Good_Empty_List() {
 
-	successResponse, err := ExecuteHttpListResponse[successListPojo, errorPojo](
+	successResponse, err := ExecuteHttpListResponse[successPojo, errorPojo](
 		context.Background(),
 		s.goxHttpCtx,
 		command.NewGoxRequestBuilder("getPosts").
@@ -203,23 +203,9 @@ func TestHttpHelperSuite(t *testing.T) {
 	suite.Run(t, new(helperTestSuite))
 }
 
-type successListPojo struct {
+type successPojo struct {
 	Id   int    `json:"id"`
 	Name string `json:"name"`
-}
-type successPojo struct {
-	ID          int    `json:"id"`
-	Slug        string `json:"slug"`
-	URL         string `json:"url"`
-	Title       string `json:"title"`
-	Content     string `json:"content"`
-	Image       string `json:"image"`
-	Thumbnail   string `json:"thumbnail"`
-	Status      string `json:"status"`
-	Category    string `json:"category"`
-	PublishedAt string `json:"publishedAt"`
-	UpdatedAt   string `json:"updatedAt"`
-	UserID      int    `json:"userId"`
 }
 
 type errorPojo struct {
