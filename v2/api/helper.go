@@ -51,10 +51,10 @@ func (e *GoxError[ErrorResp]) Unwrap() error {
 // third [errorExists[bool]] is true if error exists
 //
 // NOTE 0 if oyu got the error from ExecuteHttp then you can ignore checking OK
-func ExtractError[ErrorResp any](err error) (errorResp *GoxError[*ErrorResp], errorResponsePayloadExists bool, ok bool) {
-	var e *GoxError[*ErrorResp]
+func ExtractError[ErrorResp any](err error) (errorResp *GoxError[ErrorResp], errorResponsePayloadExists bool, ok bool) {
+	var e *GoxError[ErrorResp]
 	if errors.As(err, &e) {
-		if e.Response == nil {
+		if e.Body == nil || len(e.Body) == 0 {
 			return e, false, true
 		} else {
 			return e, true, true
@@ -89,7 +89,7 @@ func ExecuteHttp[SuccessResp any, ErrorResp any](
 				Response:   successResp,
 			}, nil
 		} else {
-			return nil, &GoxError[*ErrorResp]{
+			return nil, &GoxError[ErrorResp]{
 				Body:       resp.Body,
 				StatusCode: resp.StatusCode,
 				Err:        errors.Wrap(err, "http request passed but failed to parse response into response object"),
@@ -99,16 +99,16 @@ func ExecuteHttp[SuccessResp any, ErrorResp any](
 
 	var goxError *command.GoxHttpError
 	if errors.As(err, &goxError) {
-		var errorResp *ErrorResp
+		var errorResp ErrorResp
 		if serializationErr := serialization.JsonBytesToObject(resp.Body, &errorResp); serializationErr == nil {
-			return nil, &GoxError[*ErrorResp]{
+			return nil, &GoxError[ErrorResp]{
 				Response:   errorResp,
 				Body:       resp.Body,
 				StatusCode: resp.StatusCode,
 				Err:        err,
 			}
 		} else {
-			return nil, &GoxError[*ErrorResp]{
+			return nil, &GoxError[ErrorResp]{
 				Body:       resp.Body,
 				StatusCode: resp.StatusCode,
 				Err:        errors.Wrap(err, "http request got error with response but failed to parse response into response object"),
@@ -116,7 +116,7 @@ func ExecuteHttp[SuccessResp any, ErrorResp any](
 		}
 	}
 
-	return nil, &GoxError[*ErrorResp]{
+	return nil, &GoxError[ErrorResp]{
 		StatusCode: http.StatusInternalServerError,
 		Err:        errors.Wrap(err, "http request failed"),
 	}
@@ -148,7 +148,7 @@ func ExecuteHttpListResponse[SuccessResp any, ErrorResp any](
 				Response:   successResp,
 			}, nil
 		} else {
-			return nil, &GoxError[*ErrorResp]{
+			return nil, &GoxError[ErrorResp]{
 				Body:       resp.Body,
 				StatusCode: resp.StatusCode,
 				Err:        errors.Wrap(err, "http request passed but failed to parse response into response object"),
@@ -158,16 +158,16 @@ func ExecuteHttpListResponse[SuccessResp any, ErrorResp any](
 
 	var goxError *command.GoxHttpError
 	if errors.As(err, &goxError) {
-		var errorResp *ErrorResp
+		var errorResp ErrorResp
 		if serializationErr := serialization.JsonBytesToObject(resp.Body, &errorResp); serializationErr == nil {
-			return nil, &GoxError[*ErrorResp]{
+			return nil, &GoxError[ErrorResp]{
 				Response:   errorResp,
 				Body:       resp.Body,
 				StatusCode: resp.StatusCode,
 				Err:        err,
 			}
 		} else {
-			return nil, &GoxError[*ErrorResp]{
+			return nil, &GoxError[ErrorResp]{
 				Body:       resp.Body,
 				StatusCode: resp.StatusCode,
 				Err:        errors.Wrap(err, "http request got error with response but failed to parse response into response object"),
@@ -175,7 +175,7 @@ func ExecuteHttpListResponse[SuccessResp any, ErrorResp any](
 		}
 	}
 
-	return nil, &GoxError[*ErrorResp]{
+	return nil, &GoxError[ErrorResp]{
 		StatusCode: http.StatusInternalServerError,
 		Err:        errors.Wrap(err, "http request failed"),
 	}
