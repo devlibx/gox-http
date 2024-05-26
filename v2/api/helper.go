@@ -5,6 +5,7 @@ import (
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/serialization"
 	"github.com/devlibx/gox-http/v2/command"
+	"github.com/opentracing/opentracing-go"
 	"net/http"
 )
 
@@ -65,12 +66,21 @@ func ExtractError[ErrorResp any](err error) (errorResp *GoxError[ErrorResp], err
 
 // ExecuteHttp is a helper function to execute http request and parse response to success or error object
 func ExecuteHttp[SuccessResp any, ErrorResp any](
-	cxt context.Context,
+	ctx context.Context,
 	goxHttpCtx GoxHttpContext,
 	request *command.GoxRequest,
 ) (*GoxSuccessResponse[SuccessResp], error) {
+	span, spanCtx := opentracing.StartSpanFromContext(ctx, "goxHttp-"+request.Api)
+	defer func() {
+		if span != nil {
+			span.Finish()
+		}
+	}()
+	if spanCtx != nil {
+		ctx = spanCtx
+	}
 
-	resp, err := goxHttpCtx.Execute(cxt, request)
+	resp, err := goxHttpCtx.Execute(ctx, request)
 	if err == nil {
 
 		// If status is StatusNoContent then we will do special handling
@@ -95,6 +105,13 @@ func ExecuteHttp[SuccessResp any, ErrorResp any](
 				Err:        errors.Wrap(err, "http request passed but failed to parse response into response object"),
 			}
 		}
+	}
+
+	// Make sure to log error in span
+	if span != nil {
+		span.SetTag("error", true)
+		span.SetTag("message", err.Error())
+		span.SetTag("section", request.Api+" failed")
 	}
 
 	var goxError *command.GoxHttpError
@@ -124,12 +141,21 @@ func ExecuteHttp[SuccessResp any, ErrorResp any](
 
 // ExecuteHttpListResponse is a helper function to execute http request and parse response to success or error object
 func ExecuteHttpListResponse[SuccessResp any, ErrorResp any](
-	cxt context.Context,
+	ctx context.Context,
 	goxHttpCtx GoxHttpContext,
 	request *command.GoxRequest,
 ) (*GoxSuccessListResponse[SuccessResp], error) {
+	span, spanCtx := opentracing.StartSpanFromContext(ctx, "goxHttp-"+request.Api)
+	defer func() {
+		if span != nil {
+			span.Finish()
+		}
+	}()
+	if spanCtx != nil {
+		ctx = spanCtx
+	}
 
-	resp, err := goxHttpCtx.Execute(cxt, request)
+	resp, err := goxHttpCtx.Execute(ctx, request)
 	if err == nil {
 
 		// If status is StatusNoContent then we will do special handling

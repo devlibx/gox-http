@@ -3,6 +3,7 @@ package goxHttpApi
 import (
 	"context"
 	"github.com/devlibx/gox-base"
+	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/serialization"
 	"github.com/devlibx/gox-http/v2/command"
 	"github.com/gin-gonic/gin"
@@ -187,6 +188,10 @@ func (s *helperTestSuite) TestExecuteHttp_Bad_Error() {
 	assert.NotNil(s.T(), errorResponse)
 	assert.Equal(s.T(), http.StatusInternalServerError, errorResponse.StatusCode)
 	assert.False(s.T(), hasResponse)
+
+	var goxError *command.GoxHttpError
+	assert.True(s.T(), errors.As(err, &goxError))
+	assert.Equal(s.T(), http.StatusInternalServerError, goxError.StatusCode)
 }
 
 func (s *helperTestSuite) TearDownSuite() {
