@@ -15,6 +15,13 @@ type GoxSuccessResponse[SuccessResp any] struct {
 	StatusCode int
 }
 
+// GoxSuccessResponseList is the typed response after successful http call and parsing response to success object
+type GoxSuccessResponseList[SuccessResp any] struct {
+	Body       []byte
+	Response   []SuccessResp
+	StatusCode int
+}
+
 // GoxError is the typed response after successful http call and parsing response to success object
 type GoxError[ErrorResp any] struct {
 	Body       []byte
@@ -24,7 +31,7 @@ type GoxError[ErrorResp any] struct {
 }
 
 // Error is the error message
-func (e *GoxError[SuccessResp]) Error() string {
+func (e *GoxError[ErrorResp]) Error() string {
 	if e.Err == nil {
 		return "http error response"
 	}
@@ -32,7 +39,7 @@ func (e *GoxError[SuccessResp]) Error() string {
 }
 
 // Unwrap is the error message
-func (e *GoxError[SuccessResp]) Unwrap() error {
+func (e *GoxError[ErrorResp]) Unwrap() error {
 	return e.Err
 }
 
@@ -77,6 +84,65 @@ func ExecuteHttp[SuccessResp any, ErrorResp any](
 		var successResp *SuccessResp
 		if serializationErr := serialization.JsonBytesToObject(resp.Body, &successResp); serializationErr == nil {
 			return &GoxSuccessResponse[*SuccessResp]{
+				Body:       resp.Body,
+				StatusCode: resp.StatusCode,
+				Response:   successResp,
+			}, nil
+		} else {
+			return nil, &GoxError[*ErrorResp]{
+				Body:       resp.Body,
+				StatusCode: resp.StatusCode,
+				Err:        errors.Wrap(err, "http request passed but failed to parse response into response object"),
+			}
+		}
+	}
+
+	var goxError *command.GoxHttpError
+	if errors.As(err, &goxError) {
+		var errorResp *ErrorResp
+		if serializationErr := serialization.JsonBytesToObject(resp.Body, &errorResp); serializationErr == nil {
+			return nil, &GoxError[*ErrorResp]{
+				Response:   errorResp,
+				Body:       resp.Body,
+				StatusCode: resp.StatusCode,
+				Err:        err,
+			}
+		} else {
+			return nil, &GoxError[*ErrorResp]{
+				Body:       resp.Body,
+				StatusCode: resp.StatusCode,
+				Err:        errors.Wrap(err, "http request got error with response but failed to parse response into response object"),
+			}
+		}
+	}
+
+	return nil, &GoxError[*ErrorResp]{
+		StatusCode: http.StatusInternalServerError,
+		Err:        errors.Wrap(err, "http request failed"),
+	}
+}
+
+// ExecuteHttpList is a helper function to execute http request and parse response to success or error object
+func ExecuteHttpList[SuccessResp any, ErrorResp any](
+	cxt context.Context,
+	goxHttpCtx GoxHttpContext,
+	request *command.GoxRequest,
+) (*GoxSuccessResponseList[*SuccessResp], error) {
+
+	resp, err := goxHttpCtx.Execute(cxt, request)
+	if err == nil {
+
+		// If status is StatusNoContent then we will do special handling
+		if resp.StatusCode == http.StatusNoContent {
+			return &GoxSuccessResponseList[*SuccessResp]{
+				StatusCode: http.StatusNoContent,
+			}, nil
+		}
+
+		// In other cases we will parse the response
+		var successResp []*SuccessResp
+		if serializationErr := serialization.JsonBytesToObject(resp.Body, &successResp); serializationErr == nil {
+			return &GoxSuccessResponseList[*SuccessResp]{
 				Body:       resp.Body,
 				StatusCode: resp.StatusCode,
 				Response:   successResp,

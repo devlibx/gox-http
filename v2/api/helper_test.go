@@ -52,7 +52,7 @@ func (s *helperTestSuite) SetupSuite() {
 		} else if id == "ERROR" {
 			c.Status(http.StatusInternalServerError)
 		} else if id == "GOOD_LIST" {
-			c.String(http.StatusOK, `[{"id": 1, "Name":"a"}, {"id": 2, "Name":"b"}]`)
+			c.String(http.StatusOK, `[{"id": 1, "name":"a"}, {"id": 2, "name":"b"}]`)
 		} else {
 			c.Status(http.StatusInternalServerError)
 		}
@@ -97,11 +97,14 @@ func (s *helperTestSuite) TestExecuteHttp_Good() {
 }
 
 func (s *helperTestSuite) TestExecuteHttp_Good_List() {
-	request := command.NewGoxRequestBuilder("getPosts").
-		WithContentTypeJson().
-		WithPathParam("id", "GOOD_LIST").
-		Build()
-	successResponse, err := ExecuteHttp[[]successPojo, errorPojo](context.Background(), s.goxHttpCtx, request)
+
+	successResponse, err := ExecuteHttpList[successListPojo, errorPojo](
+		context.Background(),
+		s.goxHttpCtx,
+		command.NewGoxRequestBuilder("getPosts").
+			WithContentTypeJson().
+			WithPathParam("id", "GOOD_LIST").
+			Build())
 
 	assert.NoError(s.T(), err)
 	assert.NotNil(s.T(), successResponse)
@@ -109,6 +112,11 @@ func (s *helperTestSuite) TestExecuteHttp_Good_List() {
 	assert.NotNil(s.T(), successResponse.Body)
 	assert.Equal(s.T(), http.StatusOK, successResponse.StatusCode)
 
+	assert.True(s.T(), len(successResponse.Response) == 2)
+	assert.Equal(s.T(), 1, successResponse.Response[0].Id)
+	assert.Equal(s.T(), "a", successResponse.Response[0].Name)
+	assert.Equal(s.T(), 2, successResponse.Response[1].Id)
+	assert.Equal(s.T(), "b", successResponse.Response[1].Name)
 }
 
 func (s *helperTestSuite) TestExecuteHttp_Good_NoContent() {
@@ -143,11 +151,14 @@ func (s *helperTestSuite) TestExecuteHttp_Bad_NotFound() {
 }
 
 func (s *helperTestSuite) TestExecuteHttp_Bad_Error() {
-	request := command.NewGoxRequestBuilder("getPosts").
-		WithContentTypeJson().
-		WithPathParam("id", "ERROR").
-		Build()
-	successResponse, err := ExecuteHttp[successPojo, errorPojo](context.Background(), s.goxHttpCtx, request)
+	successResponse, err := ExecuteHttp[successPojo, errorPojo](
+		context.Background(),
+		s.goxHttpCtx,
+		command.NewGoxRequestBuilder("getPosts").
+			WithContentTypeJson().
+			WithPathParam("id", "ERROR").
+			Build(),
+	)
 
 	assert.Error(s.T(), err)
 	assert.Nil(s.T(), successResponse)
@@ -167,6 +178,10 @@ func TestHttpHelperSuite(t *testing.T) {
 	suite.Run(t, new(helperTestSuite))
 }
 
+type successListPojo struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+}
 type successPojo struct {
 	ID          int    `json:"id"`
 	Slug        string `json:"slug"`
