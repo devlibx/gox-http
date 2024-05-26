@@ -47,6 +47,12 @@ func main() {
 	}
 
 	// Execute HTTP request
+	//
+	// successResponse - this will contain the response [of type successPojo] on successfully call
+	//
+	// err - this will contain the error if there is any error while calling the api
+	//       Also if you have some payload in error then you can pass "errorPojo" to get it.
+	//       otherwise pass any
 	if successResponse, err := goxHttpApi.ExecuteHttp[successPojo, errorPojo](
 		context.Background(),
 		goxHttpCtx,
