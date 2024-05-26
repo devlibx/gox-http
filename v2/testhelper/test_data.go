@@ -17,8 +17,8 @@ var TestConfig = `
 servers:
   jsonplaceholder:
     host: jsonplaceholder.typicode.com
-    port: 443
-    https: true
+    port: 80
+    https: false
     connect_timeout: 1000
     connection_request_timeout: 1000
   testServer:

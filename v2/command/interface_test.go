@@ -2,7 +2,7 @@ package command
 
 import (
 	"github.com/devlibx/gox-base/serialization"
-	"github.com/devlibx/gox-http/testhelper"
+	"github.com/devlibx/gox-http/v2/testhelper"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -15,8 +15,8 @@ func TestParseConfig(t *testing.T) {
 	assert.True(t, len(config.Apis) > 0)
 
 	assert.Equal(t, "jsonplaceholder.typicode.com", config.Servers["jsonplaceholder"].Host)
-	assert.Equal(t, 443, config.Servers["jsonplaceholder"].Port)
-	assert.Equal(t, true, config.Servers["jsonplaceholder"].Https)
+	assert.Equal(t, 80, config.Servers["jsonplaceholder"].Port)
+	assert.Equal(t, false, config.Servers["jsonplaceholder"].Https)
 	assert.Equal(t, 1000, config.Servers["jsonplaceholder"].ConnectTimeout)
 	assert.Equal(t, 1000, config.Servers["jsonplaceholder"].ConnectionRequestTimeout)
 	assert.Equal(t, "localhost", config.Servers["testServer"].Host)
