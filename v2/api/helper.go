@@ -31,17 +31,116 @@ type GoxError[ErrorResp any] struct {
 	Err        error
 }
 
-// Error is the error message
-func (e *GoxError[ErrorResp]) Error() string {
-	if e.Err == nil {
-		return "http error response"
-	}
-	return e.Err.Error()
+// ExecuteHttp is a helper function to execute http request and parse response to success or error object
+func ExecuteHttp[SuccessResp any, ErrorResp any](
+	ctx context.Context,
+	goxHttpCtx GoxHttpContext,
+	request *command.GoxRequest,
+) (*GoxSuccessResponse[SuccessResp], error) {
+	resp, _, err := internalExecuteHttp[SuccessResp, ErrorResp](ctx, goxHttpCtx, request, false)
+	return resp, err
 }
 
-// Unwrap is the error message
-func (e *GoxError[ErrorResp]) Unwrap() error {
-	return e.Err
+// ExecuteHttpListResponse is a helper function to execute http request and parse list based response to success or error object
+func ExecuteHttpListResponse[SuccessResp any, ErrorResp any](
+	ctx context.Context,
+	goxHttpCtx GoxHttpContext,
+	request *command.GoxRequest,
+) (*GoxSuccessListResponse[SuccessResp], error) {
+	_, resp, err := internalExecuteHttp[SuccessResp, ErrorResp](ctx, goxHttpCtx, request, true)
+	return resp, err
+}
+
+// internalExecuteHttp is a helper function to execute http request and parse response to success or error object
+func internalExecuteHttp[SuccessResp any, ErrorResp any](
+	ctx context.Context,
+	goxHttpCtx GoxHttpContext,
+	request *command.GoxRequest,
+	isList bool,
+) (*GoxSuccessResponse[SuccessResp], *GoxSuccessListResponse[SuccessResp], error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "goxHttp-"+request.Api)
+	defer span.Finish()
+
+	// Execute request and process response
+	if resp, err := goxHttpCtx.Execute(ctx, request); err == nil {
+		return processSuccess[SuccessResp, ErrorResp](resp, isList, err)
+	} else {
+		logSpanOnError(span, err, request)
+		return processError[SuccessResp, ErrorResp](err, resp)
+	}
+}
+
+func processSuccess[SuccessResp any, ErrorResp any](resp *command.GoxResponse, isList bool, err error) (*GoxSuccessResponse[SuccessResp], *GoxSuccessListResponse[SuccessResp], error) {
+
+	// If status is StatusNoContent then we will do special handling
+	if resp.StatusCode == http.StatusNoContent {
+		return &GoxSuccessResponse[SuccessResp]{StatusCode: http.StatusNoContent},
+			&GoxSuccessListResponse[SuccessResp]{StatusCode: http.StatusNoContent},
+			nil
+	}
+
+	// If this is other status then based on the list/not-list process the response
+	if isList {
+		var successResp []SuccessResp
+		if serializationErr := serialization.JsonBytesToObject(resp.Body, &successResp); serializationErr == nil {
+			return nil, &GoxSuccessListResponse[SuccessResp]{
+				Body:       resp.Body,
+				StatusCode: resp.StatusCode,
+				Response:   successResp,
+			}, nil
+		}
+	} else {
+		var successResp SuccessResp
+		if serializationErr := serialization.JsonBytesToObject(resp.Body, &successResp); serializationErr == nil {
+			return &GoxSuccessResponse[SuccessResp]{
+				Body:       resp.Body,
+				StatusCode: resp.StatusCode,
+				Response:   successResp,
+			}, nil, nil
+		}
+	}
+
+	// We must have got error in parsing payload
+	return nil, nil, &GoxError[ErrorResp]{
+		Body:       resp.Body,
+		StatusCode: resp.StatusCode,
+		Err:        errors.Wrap(err, "http request passed but failed to parse response into response object"),
+	}
+}
+
+func processError[SuccessResp any, ErrorResp any](err error, resp *command.GoxResponse) (*GoxSuccessResponse[SuccessResp], *GoxSuccessListResponse[SuccessResp], error) {
+	var goxError *command.GoxHttpError
+	if errors.As(err, &goxError) {
+		var errorResp ErrorResp
+		if serializationErr := serialization.JsonBytesToObject(resp.Body, &errorResp); serializationErr == nil {
+			return nil, nil, &GoxError[ErrorResp]{
+				Response:   errorResp,
+				Body:       resp.Body,
+				StatusCode: resp.StatusCode,
+				Err:        err,
+			}
+		} else {
+			return nil, nil, &GoxError[ErrorResp]{
+				Body:       resp.Body,
+				StatusCode: resp.StatusCode,
+				Err:        errors.Wrap(err, "http request got error with response but failed to parse response into response object"),
+			}
+		}
+	}
+
+	return nil, nil, &GoxError[ErrorResp]{
+		StatusCode: http.StatusInternalServerError,
+		Err:        errors.Wrap(err, "http request failed"),
+	}
+}
+
+func logSpanOnError(span opentracing.Span, err error, request *command.GoxRequest) {
+	// Make sure to log error in span
+	if span != nil {
+		span.SetTag("error", true)
+		span.SetTag("message", err.Error())
+		span.SetTag("section", request.Api+" failed")
+	}
 }
 
 // ExtractError is a helper function to extract error from error object
@@ -64,145 +163,15 @@ func ExtractError[ErrorResp any](err error) (errorResp *GoxError[ErrorResp], err
 	return nil, false, false
 }
 
-// ExecuteHttp is a helper function to execute http request and parse response to success or error object
-func ExecuteHttp[SuccessResp any, ErrorResp any](
-	ctx context.Context,
-	goxHttpCtx GoxHttpContext,
-	request *command.GoxRequest,
-) (*GoxSuccessResponse[SuccessResp], error) {
-	span, spanCtx := opentracing.StartSpanFromContext(ctx, "goxHttp-"+request.Api)
-	defer func() {
-		if span != nil {
-			span.Finish()
-		}
-	}()
-	if spanCtx != nil {
-		ctx = spanCtx
+// Error is the error message
+func (e *GoxError[ErrorResp]) Error() string {
+	if e.Err == nil {
+		return "http error response"
 	}
-
-	resp, err := goxHttpCtx.Execute(ctx, request)
-	if err == nil {
-
-		// If status is StatusNoContent then we will do special handling
-		if resp.StatusCode == http.StatusNoContent {
-			return &GoxSuccessResponse[SuccessResp]{
-				StatusCode: http.StatusNoContent,
-			}, nil
-		}
-
-		// In other cases we will parse the response
-		var successResp SuccessResp
-		if serializationErr := serialization.JsonBytesToObject(resp.Body, &successResp); serializationErr == nil {
-			return &GoxSuccessResponse[SuccessResp]{
-				Body:       resp.Body,
-				StatusCode: resp.StatusCode,
-				Response:   successResp,
-			}, nil
-		} else {
-			return nil, &GoxError[ErrorResp]{
-				Body:       resp.Body,
-				StatusCode: resp.StatusCode,
-				Err:        errors.Wrap(err, "http request passed but failed to parse response into response object"),
-			}
-		}
-	}
-
-	// Make sure to log error in span
-	if span != nil {
-		span.SetTag("error", true)
-		span.SetTag("message", err.Error())
-		span.SetTag("section", request.Api+" failed")
-	}
-
-	var goxError *command.GoxHttpError
-	if errors.As(err, &goxError) {
-		var errorResp ErrorResp
-		if serializationErr := serialization.JsonBytesToObject(resp.Body, &errorResp); serializationErr == nil {
-			return nil, &GoxError[ErrorResp]{
-				Response:   errorResp,
-				Body:       resp.Body,
-				StatusCode: resp.StatusCode,
-				Err:        err,
-			}
-		} else {
-			return nil, &GoxError[ErrorResp]{
-				Body:       resp.Body,
-				StatusCode: resp.StatusCode,
-				Err:        errors.Wrap(err, "http request got error with response but failed to parse response into response object"),
-			}
-		}
-	}
-
-	return nil, &GoxError[ErrorResp]{
-		StatusCode: http.StatusInternalServerError,
-		Err:        errors.Wrap(err, "http request failed"),
-	}
+	return e.Err.Error()
 }
 
-// ExecuteHttpListResponse is a helper function to execute http request and parse response to success or error object
-func ExecuteHttpListResponse[SuccessResp any, ErrorResp any](
-	ctx context.Context,
-	goxHttpCtx GoxHttpContext,
-	request *command.GoxRequest,
-) (*GoxSuccessListResponse[SuccessResp], error) {
-	span, spanCtx := opentracing.StartSpanFromContext(ctx, "goxHttp-"+request.Api)
-	defer func() {
-		if span != nil {
-			span.Finish()
-		}
-	}()
-	if spanCtx != nil {
-		ctx = spanCtx
-	}
-
-	resp, err := goxHttpCtx.Execute(ctx, request)
-	if err == nil {
-
-		// If status is StatusNoContent then we will do special handling
-		if resp.StatusCode == http.StatusNoContent {
-			return &GoxSuccessListResponse[SuccessResp]{
-				StatusCode: http.StatusNoContent,
-			}, nil
-		}
-
-		// In other cases we will parse the response
-		var successResp []SuccessResp
-		if serializationErr := serialization.JsonBytesToObject(resp.Body, &successResp); serializationErr == nil {
-			return &GoxSuccessListResponse[SuccessResp]{
-				Body:       resp.Body,
-				StatusCode: resp.StatusCode,
-				Response:   successResp,
-			}, nil
-		} else {
-			return nil, &GoxError[ErrorResp]{
-				Body:       resp.Body,
-				StatusCode: resp.StatusCode,
-				Err:        errors.Wrap(err, "http request passed but failed to parse response into response object"),
-			}
-		}
-	}
-
-	var goxError *command.GoxHttpError
-	if errors.As(err, &goxError) {
-		var errorResp ErrorResp
-		if serializationErr := serialization.JsonBytesToObject(resp.Body, &errorResp); serializationErr == nil {
-			return nil, &GoxError[ErrorResp]{
-				Response:   errorResp,
-				Body:       resp.Body,
-				StatusCode: resp.StatusCode,
-				Err:        err,
-			}
-		} else {
-			return nil, &GoxError[ErrorResp]{
-				Body:       resp.Body,
-				StatusCode: resp.StatusCode,
-				Err:        errors.Wrap(err, "http request got error with response but failed to parse response into response object"),
-			}
-		}
-	}
-
-	return nil, &GoxError[ErrorResp]{
-		StatusCode: http.StatusInternalServerError,
-		Err:        errors.Wrap(err, "http request failed"),
-	}
+// Unwrap is the error message
+func (e *GoxError[ErrorResp]) Unwrap() error {
+	return e.Err
 }
