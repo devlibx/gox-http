@@ -30,7 +30,6 @@ apis:
 `
 
 func main() {
-	cf := gox.NewCrossFunction()
 
 	// Read config and
 	config := command.Config{}
@@ -41,7 +40,7 @@ func main() {
 	}
 
 	// Setup goHttp context
-	goxHttpCtx, err := goxHttpApi.NewGoxHttpContext(cf, &config)
+	goxHttpCtx, err := goxHttpApi.NewGoxHttpContext(gox.NewCrossFunction(), &config)
 	if err != nil {
 		slog.Error("got error in creating gox http context config", err)
 		return
