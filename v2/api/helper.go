@@ -6,8 +6,12 @@ import (
 	"github.com/devlibx/gox-base/serialization"
 	"github.com/devlibx/gox-http/v2/command"
 	"github.com/opentracing/opentracing-go"
+	"log/slog"
 	"net/http"
 )
+
+// GoxHttpRequestResponseLoggingEnabled is a global flag to enable logging of request response
+var GoxHttpRequestResponseLoggingEnabled = slog.LevelDebug
 
 // GoxSuccessResponse is the typed response after successful http call and parsing response to success object
 type GoxSuccessResponse[SuccessResp any] struct {
@@ -37,7 +41,15 @@ func ExecuteHttp[SuccessResp any, ErrorResp any](
 	goxHttpCtx GoxHttpContext,
 	request *command.GoxRequest,
 ) (*GoxSuccessResponse[SuccessResp], error) {
+
+	// Execute HTTP
 	resp, _, err := internalExecuteHttp[SuccessResp, ErrorResp](ctx, goxHttpCtx, request, false)
+
+	// If log is enabled then dump based on log level
+	if GoxHttpRequestResponseLoggingEnabled >= slog.LevelDebug {
+		logRequestResponse[SuccessResp, ErrorResp](request, resp, GoxHttpRequestResponseLoggingEnabled)
+	}
+
 	return resp, err
 }
 
@@ -62,8 +74,14 @@ func internalExecuteHttp[SuccessResp any, ErrorResp any](
 	defer span.Finish()
 
 	// Execute request and process response
-	if resp, err := goxHttpCtx.Execute(ctx, request); err == nil {
-		return processSuccess[SuccessResp, ErrorResp](resp, isList, err)
+	resp, err := goxHttpCtx.Execute(ctx, request)
+	if err == nil {
+		if resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices {
+			return processSuccess[SuccessResp, ErrorResp](resp, isList, err)
+		} else {
+			logSpanOnError(span, err, request)
+			return processError[SuccessResp, ErrorResp](err, resp)
+		}
 	} else {
 		logSpanOnError(span, err, request)
 		return processError[SuccessResp, ErrorResp](err, resp)
@@ -110,7 +128,7 @@ func processSuccess[SuccessResp any, ErrorResp any](resp *command.GoxResponse, i
 
 func processError[SuccessResp any, ErrorResp any](err error, resp *command.GoxResponse) (*GoxSuccessResponse[SuccessResp], *GoxSuccessListResponse[SuccessResp], error) {
 	var goxError *command.GoxHttpError
-	if errors.As(err, &goxError) {
+	if errors.As(err, &goxError) || (resp != nil && resp.Body != nil && len(resp.Body) > 0) {
 		var errorResp ErrorResp
 		if serializationErr := serialization.JsonBytesToObject(resp.Body, &errorResp); serializationErr == nil {
 			return nil, nil, &GoxError[ErrorResp]{
@@ -138,8 +156,30 @@ func logSpanOnError(span opentracing.Span, err error, request *command.GoxReques
 	// Make sure to log error in span
 	if span != nil {
 		span.SetTag("error", true)
-		span.SetTag("message", err.Error())
+		if err != nil {
+			span.SetTag("message", err.Error())
+		}
 		span.SetTag("section", request.Api+" failed")
+	}
+}
+
+func logRequestResponse[SuccessResp any, ErrorResp any](request *command.GoxRequest, response *GoxSuccessResponse[SuccessResp], level slog.Level) {
+	apiLog := slog.String("api", request.Api)
+	requestLog := slog.Any("request", request)
+	responseLog := slog.String("response", "null")
+	responseStrLog := slog.String("response_str", "null")
+	statusLog := slog.Int("status", 0)
+	if response != nil {
+		if response.Body != nil {
+			responseLog = slog.Any("response", response.Response)
+			responseStrLog = slog.Any("response_str", string(response.Body))
+		}
+		statusLog = slog.Int("status", response.StatusCode)
+	}
+	if level == slog.LevelDebug {
+		slog.Debug("GoxHttp Logging", apiLog, requestLog, responseLog, responseStrLog, statusLog)
+	} else if level == slog.LevelInfo {
+		slog.Info("GoxHttp Logging", apiLog, requestLog, responseLog, responseStrLog, statusLog)
 	}
 }
 

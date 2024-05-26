@@ -12,6 +12,7 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 	github.com/stretchr/testify v1.8.3
+	github.com/veqryn/slog-json v0.3.0
 	go.uber.org/zap v1.23.0
 )
 
@@ -23,6 +24,7 @@ require (
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
+	github.com/go-json-experiment/json v0.0.0-20240412061110-8868a69194fa // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.14.0 // indirect

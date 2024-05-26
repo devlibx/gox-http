@@ -7,12 +7,16 @@ import (
 	"github.com/devlibx/gox-base/serialization"
 	"github.com/devlibx/gox-http/v2/command"
 	"github.com/gin-gonic/gin"
+	"github.com/go-json-experiment/json"
+	"github.com/go-json-experiment/json/jsontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	slogjson "github.com/veqryn/slog-json"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strconv"
 	"testing"
 )
@@ -40,6 +44,23 @@ type helperTestSuite struct {
 }
 
 func (s *helperTestSuite) SetupSuite() {
+	GoxHttpRequestResponseLoggingEnabled = slog.LevelInfo
+	h := slogjson.NewHandler(os.Stdout, &slogjson.HandlerOptions{
+		AddSource:   false,
+		Level:       GoxHttpRequestResponseLoggingEnabled,
+		ReplaceAttr: nil, // Same signature and behavior as stdlib JSONHandler
+		JSONOptions: json.JoinOptions(
+			// Options from the json v2 library (these are the defaults)
+			json.Deterministic(true),
+			jsontext.AllowDuplicateNames(true),
+			jsontext.AllowInvalidUTF8(true),
+			jsontext.EscapeForJS(false),
+			jsontext.SpaceAfterColon(false),
+			jsontext.SpaceAfterComma(true),
+		),
+	})
+	slog.SetDefault(slog.New(h))
+
 	t := s.T()
 	s.R = gin.New()
 	s.R.GET("/posts/:id", func(c *gin.Context) {
