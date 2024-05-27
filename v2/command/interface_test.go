@@ -2,7 +2,7 @@ package command
 
 import (
 	"github.com/devlibx/gox-base/serialization"
-	"github.com/devlibx/gox-http/testhelper"
+	"github.com/devlibx/gox-http/v2/testhelper"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
