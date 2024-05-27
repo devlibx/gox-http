@@ -19,6 +19,7 @@ import (
 	"os"
 	"strconv"
 	"testing"
+	"time"
 )
 
 var httpConfig = `
@@ -32,8 +33,8 @@ apis:
     method: GET
     path: /posts/{id}
     server: testServer
-    timeout: 1000
-    acceptable_codes: 200,201,204
+    timeout: 100
+    acceptable_codes: 200,201,204 
 `
 
 type helperTestSuite struct {
@@ -79,6 +80,9 @@ func (s *helperTestSuite) SetupSuite() {
 			c.String(http.StatusOK, `[]`)
 		} else if id == "NOT_FOUND_WITH_NO_BODY" {
 			c.Status(http.StatusNotFound)
+		} else if id == "HYSTRIX" {
+			time.Sleep(200 * time.Millisecond)
+			c.String(http.StatusOK, `{"id":1, "name":"user_1"}`)
 		} else {
 			c.Status(http.StatusInternalServerError)
 		}
@@ -260,6 +264,19 @@ func (s *helperTestSuite) TestExecuteHttp_Bad_Error() {
 	var goxError *command.GoxHttpError
 	assert.True(s.T(), errors.As(err, &goxError))
 	assert.Equal(s.T(), http.StatusInternalServerError, goxError.StatusCode)
+}
+
+func (s *helperTestSuite) TestExecuteHttp_Bad_Hystrix() {
+	request := command.NewGoxRequestBuilder("getPosts").
+		WithContentTypeJson().
+		WithPathParam("id", "HYSTRIX").
+		Build()
+	_, err := ExecuteHttp[successPojo, errorPojo](context.Background(), s.goxHttpCtx, request)
+	assert.Error(s.T(), err)
+
+	var goxError *command.GoxHttpError
+	assert.True(s.T(), errors.As(err, &goxError))
+	assert.True(s.T(), goxError.IsRequestTimeout())
 }
 
 func (s *helperTestSuite) TearDownSuite() {
