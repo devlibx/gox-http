@@ -95,6 +95,11 @@ func processSuccess[SuccessResp any, ErrorResp any](resp *command.GoxResponse, i
 		return &GoxSuccessResponse[SuccessResp]{StatusCode: http.StatusNoContent},
 			&GoxSuccessListResponse[SuccessResp]{StatusCode: http.StatusNoContent},
 			nil
+	} else if resp.StatusCode == http.StatusOK && (resp.Body == nil || len(resp.Body) == 0) {
+		// There are cases where we get http status = 200 but no response body
+		return &GoxSuccessResponse[SuccessResp]{StatusCode: http.StatusNoContent},
+			&GoxSuccessListResponse[SuccessResp]{StatusCode: http.StatusNoContent},
+			nil
 	}
 
 	// If this is other status then based on the list/not-list process the response
