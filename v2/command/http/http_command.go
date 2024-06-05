@@ -7,6 +7,7 @@ import (
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/serialization"
 	"github.com/devlibx/gox-http/v2/command"
+	"github.com/devlibx/gox-http/v2/interceptor"
 	"github.com/go-resty/resty/v2"
 	_ "github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
@@ -249,6 +250,45 @@ func (h *HttpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 				Message:    "failed to read body using Stringify",
 				ErrorCode:  command.ErrorCodeFailedToBuildRequest,
 			}
+		}
+	}
+
+	return h.intercept(ctx, r)
+}
+func (h *HttpCommand) intercept(ctx context.Context, r *resty.Request) (*resty.Request, error) {
+
+	// Get the valid config from server and api
+	var interceptorConfig *interceptor.Config
+	if h.server.InterceptorConfig != nil && !h.server.InterceptorConfig.Disabled {
+		interceptorConfig = h.server.InterceptorConfig
+	} else if h.api.InterceptorConfig != nil && !h.api.InterceptorConfig.Disabled {
+		interceptorConfig = h.api.InterceptorConfig
+	} else {
+		return r, nil
+	}
+
+	// Before we move forward, lets intercept this request and enrich it if required
+	in := interceptor.NewInterceptor(interceptorConfig)
+	if _, enabled := in.Info(); !enabled {
+		return r, nil
+	}
+
+	// Name to log error
+	name, _ := in.Info()
+
+	// Intercept body and update if required
+	if bodyModified, modifiedBody, err := in.Intercept(ctx, r.Body); err != nil {
+		return nil, errors.Wrap(err, "failed to intercept request body using interceptor: name=%s", name)
+	} else if bodyModified {
+		r.SetBody(modifiedBody)
+	}
+
+	// Enrich headers
+	if newHeaders, err := in.EnrichHeaders(ctx); err != nil {
+		return nil, errors.Wrap(err, "failed to intercept request headers using interceptor: name=%s", name)
+	} else if len(newHeaders) > 0 {
+		for h, value := range newHeaders {
+			r.SetHeader(h, value)
 		}
 	}
 
