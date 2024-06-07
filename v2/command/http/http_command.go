@@ -240,7 +240,7 @@ func (h *HttpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 				ErrorCode:  command.ErrorCodeFailedToBuildRequest,
 			}
 		}
-	} else {
+	} else if request.Body != nil {
 		if b, err := serialization.Stringify(request.Body); err == nil {
 			r.SetBody(b)
 		} else {
@@ -277,19 +277,10 @@ func (h *HttpCommand) intercept(ctx context.Context, r *resty.Request) (*resty.R
 	name, _ := in.Info()
 
 	// Intercept body and update if required
-	if bodyModified, modifiedBody, err := in.Intercept(ctx, r.Body); err != nil {
+	if requestModified, modifiedRequest, err := in.Intercept(ctx, r); err != nil {
 		return nil, errors.Wrap(err, "failed to intercept request body using interceptor: name=%s", name)
-	} else if bodyModified {
-		r.SetBody(modifiedBody)
-	}
-
-	// Enrich headers
-	if newHeaders, err := in.EnrichHeaders(ctx); err != nil {
-		return nil, errors.Wrap(err, "failed to intercept request headers using interceptor: name=%s", name)
-	} else if len(newHeaders) > 0 {
-		for h, value := range newHeaders {
-			r.SetHeader(h, value)
-		}
+	} else if requestModified {
+		return modifiedRequest.(*resty.Request), nil
 	}
 
 	return r, nil

@@ -10,15 +10,22 @@ type Config struct {
 }
 
 type HmacConfig struct {
-	Disabled      bool   `json:"disabled" yaml:"disabled"`
-	Key           string `json:"key" yaml:"key"`
-	HashHeaderKey string `json:"hash_header_key" yaml:"hash_header_key"`
+	Disabled bool   `json:"disabled" yaml:"disabled"`
+	Key      string `json:"key" yaml:"key"`
+
+	DumpDebug bool `json:"dump_debug" yaml:"dump_debug"`
+
+	HashHeaderKey      string `json:"hash_header_key" yaml:"hash_header_key"`
+	TimestampHeaderKey string `json:"timestamp_header_key" yaml:"timestamp_header_key"`
+
+	// Headers to include in signature - what all headers you should include in signature
+	HeadersToIncludeInSignature  []string `json:"headers_to_include_in_signature" yaml:"headers_to_include_in_signature"`
+	ConvertHeaderKeysToLowerCase bool     `json:"convert_header_keys_to_lower_case" yaml:"convert_header_keys_to_lower_case"`
 }
 
 type Interceptor interface {
 	Info() (name string, enabled bool)
 	Intercept(ctx context.Context, body any) (bodyModified bool, modifiedBody any, err error)
-	EnrichHeaders(ctx context.Context) (headers map[string]string, err error)
 }
 
 func NewInterceptor(config *Config) Interceptor {
