@@ -26,6 +26,10 @@ func (h *hmacSha256Interceptor) Info() (name string, enabled bool) {
 }
 
 func (h *hmacSha256Interceptor) interceptRestyRequest(ctx context.Context, request *resty.Request) (requestModified bool, modifiedRequest *resty.Request, err error) {
+	if h.config.Key == "" {
+		return false, request, errors.New("key is missing in hmac config - we must have set secret key for hash generation")
+	}
+
 	mac := hmac.New(sha256.New, []byte(h.config.Key))
 
 	// Build payload to calculate HMAC
@@ -44,16 +48,6 @@ func (h *hmacSha256Interceptor) interceptRestyRequest(ctx context.Context, reque
 		return false, nil, errors.New("invalid body type for interceptor hmac-sha256")
 	}
 
-	if h.config.Key == "" {
-		return false, request, errors.New("key is missing in hmac config - we must have set secret key for hash generation")
-	} else {
-		if buf.Len() > 0 {
-			buf.WriteString("#" + h.config.Key)
-		} else {
-			buf.WriteString(h.config.Key)
-		}
-	}
-
 	// Step 2 - If we also want to append timestamp then add it
 	ts := fmt.Sprintf("%d", time.Now().UnixMilli())
 	// Hijack timestamp if it is set in context (used in testing)
@@ -62,7 +56,11 @@ func (h *hmacSha256Interceptor) interceptRestyRequest(ctx context.Context, reque
 	}
 	if h.config.TimestampHeaderKey != "" {
 		request.SetHeader(h.config.TimestampHeaderKey, ts)
-		buf.WriteString("#" + ts)
+		if buf.Len() > 0 {
+			buf.WriteString("#" + ts)
+		} else {
+			buf.WriteString(ts)
+		}
 	}
 
 	// Step 3 - add all required headers also as a part of hash payload
