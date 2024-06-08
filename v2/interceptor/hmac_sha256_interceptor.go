@@ -69,7 +69,7 @@ func (h *hmacSha256Interceptor) interceptRestyRequest(ctx context.Context, reque
 
 		// Make a list of <header, value> pair
 		for _, header := range h.config.HeadersToIncludeInSignature {
-			if h.config.ConvertHeaderKeysToLowerCase {
+			if h.config.ConvertHeaderKeysToLowerCase == true {
 				header = strings.ToLower(header)
 			}
 			value := request.Header.Get(header)
