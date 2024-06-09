@@ -31,6 +31,8 @@ var DefaultStartSpanFromContextFunc StartSpanFromContext = func(ctx context.Cont
 	return opentracing.StartSpanFromContext(ctx, operationName, opts...)
 }
 
+var ContextBasedHeaderPrefix = "__request_scope_headers__"
+
 type HttpCommand struct {
 	gox.CrossFunction
 	server           *command.Server
@@ -206,6 +208,15 @@ func (h *HttpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 	if _, ok := request.Header["Content-Type"]; !ok {
 		if _, ok := request.Header["content-type"]; !ok {
 			r.SetHeader("content-type", "application/json")
+		}
+	}
+
+	// Add request scope header
+	if ctx.Value(ContextBasedHeaderPrefix) != nil {
+		if requestScopeHeaders, ok := ctx.Value(ContextBasedHeaderPrefix).(map[string]interface{}); ok {
+			for k, v := range requestScopeHeaders {
+				r.SetHeader(k, fmt.Sprintf("%v", v))
+			}
 		}
 	}
 
