@@ -2,11 +2,24 @@ package interceptor
 
 import (
 	"context"
+	"github.com/devlibx/gox-base/errors"
+	"github.com/devlibx/gox-base/serialization"
 )
 
 type Config struct {
 	Disabled   bool        `json:"disabled" yaml:"disabled"`
 	HmacConfig *HmacConfig `json:"hmac_config" yaml:"hmac_config"`
+}
+
+func (cfg *Config) PopulateFromMap(input map[string]interface{}, debugString string) error {
+	if out, err := serialization.Stringify(input); err != nil {
+		return errors.Wrap(err, "error is stringfy interceptor_config property: info=%s", debugString)
+	} else {
+		if err := serialization.JsonBytesToObject([]byte(out), &cfg); err != nil {
+			return errors.Wrap(err, "error is parsing interceptor_config property: info=%s", debugString)
+		}
+	}
+	return nil
 }
 
 type HmacConfig struct {

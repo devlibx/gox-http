@@ -5,6 +5,7 @@ import (
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/serialization"
 	"github.com/devlibx/gox-base/util"
+	"github.com/devlibx/gox-http/v2/interceptor"
 )
 
 func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -63,6 +64,12 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 					s.Headers = _m
 				}
 			}
+			if m, ok := valueMap["interceptor_config"].(map[string]interface{}); ok {
+				s.InterceptorConfig = &interceptor.Config{}
+				if err := s.InterceptorConfig.PopulateFromMap(m, "server="+name); err != nil {
+					return err
+				}
+			}
 		}
 	}
 
@@ -114,6 +121,12 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			}
 			if a.InitialRetryWaitTimeMs, err = retry_initial_wait_time_ms.GetInt(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing retry_initial_wait_time_ms property for api=%s", name)
+			}
+			if m, ok := valueMap["interceptor_config"].(map[string]interface{}); ok {
+				a.InterceptorConfig = &interceptor.Config{}
+				if err := a.InterceptorConfig.PopulateFromMap(m, "api="+name); err != nil {
+					return err
+				}
 			}
 		}
 	}
