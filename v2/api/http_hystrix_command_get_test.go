@@ -147,7 +147,7 @@ func Test_Hystrix_Get_Timeout_WhenHystrixTimeoutHappensBeforeHttpTimeout(t *test
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
 	_, err = goxHttpCtx.Execute(ctx, request)
-	assert.Error(t, err)
+	assert.Error(t, err, "did not expected error")
 	if e, ok := err.(*command.GoxHttpError); ok {
 		assert.Equal(t, "hystrix_timeout", e.ErrorCode)
 	} else {

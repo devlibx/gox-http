@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/serialization"
+	"github.com/devlibx/gox-http/v2/interceptor"
 	"net/http"
 )
 
@@ -27,6 +28,7 @@ type Server struct {
 	ConnectionRequestTimeout int                    `yaml:"connection_request_timeout"`
 	Properties               map[string]interface{} `yaml:"properties"`
 	Headers                  map[string]interface{} `yaml:"headers"`
+	InterceptorConfig        *interceptor.Config    `yaml:"interceptor_config"`
 }
 
 // List of all APIs
@@ -39,17 +41,18 @@ type Apis map[string]*Api
 // ****************************************************************************************
 type Api struct {
 	Name                   string
-	Method                 string            `yaml:"method"`
-	Path                   string            `yaml:"path"`
-	Server                 string            `yaml:"server"`
-	Timeout                int               `yaml:"timeout"`
-	Concurrency            int               `yaml:"concurrency"`
-	QueueSize              int               `yaml:"queue_size"`
-	Async                  bool              `yaml:"async"`
-	AcceptableCodes        string            `yaml:"acceptable_codes"`
-	RetryCount             int               `yaml:"retry_count"`
-	InitialRetryWaitTimeMs int               `yaml:"retry_initial_wait_time_ms"`
-	Headers                map[string]string `yaml:"headers"`
+	Method                 string              `yaml:"method"`
+	Path                   string              `yaml:"path"`
+	Server                 string              `yaml:"server"`
+	Timeout                int                 `yaml:"timeout"`
+	Concurrency            int                 `yaml:"concurrency"`
+	QueueSize              int                 `yaml:"queue_size"`
+	Async                  bool                `yaml:"async"`
+	AcceptableCodes        string              `yaml:"acceptable_codes"`
+	RetryCount             int                 `yaml:"retry_count"`
+	InitialRetryWaitTimeMs int                 `yaml:"retry_initial_wait_time_ms"`
+	Headers                map[string]string   `yaml:"headers"`
+	InterceptorConfig      *interceptor.Config `yaml:"interceptor_config"`
 	acceptableCodes        []int
 	DisableHystrix         bool
 }

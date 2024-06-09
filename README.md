@@ -227,3 +227,25 @@ assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"
 assert.Equal(t, "/bad_new", response.AsStringObjectMapOrEmpty().StringOrEmpty("url"))
 
 ```
+
+### Enable HmacSha256 validation
+1. interceptor_config.hmac_config => set this up to use HMAC SHA256
+2. key => secret key to use for HMAC
+3. hash_header_key => Hash will be calculated and will be passed with this header key
+4. timestamp_header_key => timestamp will be passed with this header key
+5. headers_to_include_in_signature => list of headers which will be included in signature calculation
+6. convert_header_keys_to_lower_case => if true then all header keys will be converted to lower case before calculating signature
+```yaml
+servers:
+  jsonplaceholder:
+    host: jsonplaceholder.typicode.com
+    port: 443
+    https: true
+    interceptor_config:
+       hmac_config:
+          key: <some secret>
+          hash_header_key: X-Hash-code-sha
+          timestamp_header_key: X-Time
+          headers_to_include_in_signature: [x-header-1, x-header-2]
+          convert_header_keys_to_lower_case: true
+```
