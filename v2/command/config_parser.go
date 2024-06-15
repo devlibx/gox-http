@@ -94,6 +94,7 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			var acceptable_codes = serialization.ParameterizedValue(valueMap.StringOrDefault("acceptable_codes", "200,201"))
 			var retry_count = serialization.ParameterizedValue(valueMap.StringOrDefault("retry_count", "0"))
 			var retry_initial_wait_time_ms = serialization.ParameterizedValue(valueMap.StringOrDefault("retry_initial_wait_time_ms", "1"))
+			var enable_request_response = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_request_response_logging", "false"))
 
 			if a.Path, err = path.GetString(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing path property for api=%s", name)
@@ -127,6 +128,9 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 				if err := a.InterceptorConfig.PopulateFromMap(m, "api="+name); err != nil {
 					return err
 				}
+			}
+			if a.EnableRequestResponseLogging, err = enable_request_response.GetBool(e.Env); err != nil {
+				return errors.Wrap(err, "error is parsing enable_request_response_logging property for api=%s", name)
 			}
 		}
 	}

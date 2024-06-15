@@ -22,6 +22,8 @@ import (
 
 var EnableGoxHttpMetricLogging = false
 var EnableTimeTakenByHttpCall = false
+var EnableRequestResponseBodyLogging = false
+var EnableRestyDebug = false
 
 // StartSpanFromContext is added for someone to override the implementation
 type StartSpanFromContext func(ctx context.Context, operationName string, opts ...opentracing.StartSpanOption) (opentracing.Span, context.Context)
@@ -103,7 +105,9 @@ func (h *HttpCommand) internalExecute(ctx context.Context, request *command.GoxR
 
 	// Create the url to call
 	finalUrlToRequest := h.api.GetPath(h.server)
-	h.debugLogger.Debug("got request to execute", zap.Stringer("request", request), zap.String("url", finalUrlToRequest))
+	if !EnableRequestResponseBodyLogging {
+		h.debugLogger.Debug("got request to execute", zap.Stringer("request", request), zap.String("url", finalUrlToRequest))
+	}
 
 	start := time.Now()
 	switch strings.ToUpper(h.api.Method) {
@@ -121,6 +125,14 @@ func (h *HttpCommand) internalExecute(ctx context.Context, request *command.GoxR
 	end := time.Now()
 	if EnableTimeTakenByHttpCall {
 		h.logger.Info("Time taken: ", zap.Int64("time_taken", end.UnixMilli()-start.UnixMilli()), zap.Int64("start", start.UnixMilli()), zap.Int64("end", end.UnixMilli()), zap.String("url", finalUrlToRequest))
+	}
+
+	if EnableRequestResponseBodyLogging {
+		if response.Body() != nil && len(response.Body()) > 0 {
+			h.debugLogger.Debug("request/response of http call", zap.String("url", finalUrlToRequest), zap.Stringer("request", request), zap.String("response", string(response.Body())), zap.Int("response_code", response.StatusCode()))
+		} else {
+			h.debugLogger.Debug("request/response of http call", zap.String("url", finalUrlToRequest), zap.Stringer("request", request), zap.Int("response_code", response.StatusCode()))
+		}
 	}
 
 	if err != nil {
@@ -414,5 +426,11 @@ func NewHttpCommand(cf gox.CrossFunction, server *command.Server, api *command.A
 	c.debugLogger = c.logger.Sugar()
 	c.client.SetAllowGetMethodPayload(true)
 	c.client.SetTimeout(time.Duration(api.Timeout) * time.Millisecond)
+
+	// If Resty Debug is enabled then we will dump request response
+	if EnableRestyDebug || api.EnableRequestResponseLogging {
+		c.client.SetDebug(true)
+	}
+
 	return c, nil
 }
