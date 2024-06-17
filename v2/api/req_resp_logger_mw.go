@@ -40,7 +40,7 @@ func (w requestResponseBodyWriter) Write(b []byte) (int, error) {
 }
 
 // RequestResponseLoggerMiddleware is a middleware that logs the request and response
-func RequestResponseLoggerMiddleware(logFunc func(*RequestResponseLog)) gin.HandlerFunc {
+func RequestResponseLoggerMiddleware(logFunc func(*gin.Context, *RequestResponseLog)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Request headers
 		requestHeaders := map[string]interface{}{}
@@ -87,7 +87,7 @@ func RequestResponseLoggerMiddleware(logFunc func(*RequestResponseLog)) gin.Hand
 		if responseBodyWriter.body != nil {
 			log.ResponseBodyBytes = responseBodyWriter.body.Bytes()
 		}
-		logFunc(log)
+		logFunc(c, log)
 	}
 }
 
