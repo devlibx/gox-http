@@ -6,6 +6,7 @@ import (
 	"github.com/devlibx/gox-base"
 	"github.com/gin-gonic/gin"
 	"io"
+	"log/slog"
 	"strings"
 )
 
@@ -143,6 +144,7 @@ func NewRequestResponseSecurityConfigApplier(config *RequestResponseSecurityConf
 func (r *requestResponseSecurityConfigApplier) Process(log *RequestResponseLog) *RequestResponseLog {
 	defer func() {
 		if r := recover(); r != nil {
+			slog.Error("failed requestResponseSecurityConfigApplier - handled using recover")
 		}
 	}()
 	if r.Config == nil {
