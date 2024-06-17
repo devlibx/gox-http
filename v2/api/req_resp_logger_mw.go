@@ -141,6 +141,10 @@ func NewRequestResponseSecurityConfigApplier(config *RequestResponseSecurityConf
 }
 
 func (r *requestResponseSecurityConfigApplier) Process(log *RequestResponseLog) *RequestResponseLog {
+	defer func() {
+		if r := recover(); r != nil {
+		}
+	}()
 	if r.Config == nil {
 		return log
 	} else if !r.Config.EnableRequestLogging {
