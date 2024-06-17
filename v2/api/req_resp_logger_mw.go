@@ -92,12 +92,13 @@ func RequestResponseLoggerMiddleware(logFunc func(*RequestResponseLog)) gin.Hand
 
 // RequestResponseSecurityConfig is the configuration for request response security
 type RequestResponseSecurityConfig struct {
-	EnableRequestLogging  bool     `json:"enable_request_logging" yaml:"enable_request_logging"`
-	IgnoreRequestHeaders  []string `json:"ignore_request_headers" yaml:"ignore_request_headers"`
-	IgnoreResponseHeaders []string `json:"ignore_response_headers" yaml:"ignore_response_headers"`
-	IgnoreKeysInRequest   []string `json:"ignore_keys_in_request" yaml:"ignore_keys_in_request"`
-	IgnoreKeysInResponse  []string `json:"ignore_keys_in_response" yaml:"ignore_keys_in_response"`
-	MaskString            string   `json:"mask_string" yaml:"mask_string"`
+	EnableRequestLoggingToConsole bool     `json:"enable_request_logging_to_console" yaml:"enable_request_logging_to_console"`
+	EnableRequestLogging          bool     `json:"enable_request_logging" yaml:"enable_request_logging"`
+	IgnoreRequestHeaders          []string `json:"ignore_request_headers" yaml:"ignore_request_headers"`
+	IgnoreResponseHeaders         []string `json:"ignore_response_headers" yaml:"ignore_response_headers"`
+	IgnoreKeysInRequest           []string `json:"ignore_keys_in_request" yaml:"ignore_keys_in_request"`
+	IgnoreKeysInResponse          []string `json:"ignore_keys_in_response" yaml:"ignore_keys_in_response"`
+	MaskString                    string   `json:"mask_string" yaml:"mask_string"`
 }
 
 // RequestResponseSecurityConfigApplier is an interface to apply security configuration to request response logs
