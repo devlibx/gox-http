@@ -147,6 +147,7 @@ func (r *requestResponseSecurityConfigApplier) Process(log *RequestResponseLog) 
 			slog.Error("failed requestResponseSecurityConfigApplier - handled using recover")
 		}
 	}()
+
 	if r.Config == nil {
 		return log
 	} else if !r.Config.EnableRequestLogging {
