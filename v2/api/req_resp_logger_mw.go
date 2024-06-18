@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"strings"
+	"time"
 )
 
 type RequestResponseLog struct {
@@ -16,11 +17,12 @@ type RequestResponseLog struct {
 	ResponseHeaders   map[string]interface{}
 	RequestBodyBytes  []byte
 	ResponseBodyBytes []byte
+	TimeTakenMs       int64
 }
 
 func (r *RequestResponseLog) String() string {
 	var logBuilder strings.Builder
-	logBuilder.WriteString(fmt.Sprintf("URL:\n %s\n", r.URL))
+	logBuilder.WriteString(fmt.Sprintf("URL:\n %s TimeMs=%d\n", r.URL, r.TimeTakenMs))
 	logBuilder.WriteString(fmt.Sprintf("Request Headers:\n %v\n", r.RequestHeaders))
 	logBuilder.WriteString(fmt.Sprintf("Request Body:\n %s\n", r.RequestBodyBytes))
 	logBuilder.WriteString(fmt.Sprintf("Response Headers:\n %v\n", r.ResponseHeaders))
@@ -42,6 +44,8 @@ func (w requestResponseBodyWriter) Write(b []byte) (int, error) {
 // RequestResponseLoggerMiddleware is a middleware that logs the request and response
 func RequestResponseLoggerMiddleware(logFunc func(*gin.Context, *RequestResponseLog)) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		start := time.Now()
+
 		// Request headers
 		requestHeaders := map[string]interface{}{}
 		for key, values := range c.Request.Header {
@@ -87,6 +91,8 @@ func RequestResponseLoggerMiddleware(logFunc func(*gin.Context, *RequestResponse
 		if responseBodyWriter.body != nil {
 			log.ResponseBodyBytes = responseBodyWriter.body.Bytes()
 		}
+		end := time.Now()
+		log.TimeTakenMs = end.UnixMilli() - start.UnixMilli()
 		logFunc(c, log)
 	}
 }
