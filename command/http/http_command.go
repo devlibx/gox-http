@@ -21,6 +21,7 @@ import (
 
 var EnableGoxHttpMetricLogging = false
 var EnableTimeTakenByHttpCall = false
+var EnableRestyDebug = false
 
 // StartSpanFromContext is added for someone to override the implementation
 type StartSpanFromContext func(ctx context.Context, operationName string, opts ...opentracing.StartSpanOption) (opentracing.Span, context.Context)
@@ -372,5 +373,11 @@ func NewHttpCommand(cf gox.CrossFunction, server *command.Server, api *command.A
 	c.debugLogger = c.logger.Sugar()
 	c.client.SetAllowGetMethodPayload(true)
 	c.client.SetTimeout(time.Duration(api.Timeout) * time.Millisecond)
+
+	// If Resty Debug is enabled then we will dump request response
+	if EnableRestyDebug {
+		c.client.SetDebug(true)
+	}
+
 	return c, nil
 }
