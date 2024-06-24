@@ -90,8 +90,14 @@ func (c *Config) FindApiByName(toFind string) (*Api, error) {
 
 func (a *Api) GetPath(server *Server) string {
 	if server.Https {
+		if server.Port == -1 {
+			return fmt.Sprintf("https://%s%s", server.Host, a.Path)
+		}
 		return fmt.Sprintf("https://%s:%d%s", server.Host, server.Port, a.Path)
 	} else {
+		if server.Port == -1 {
+			return fmt.Sprintf("http://%s%s", server.Host, a.Path)
+		}
 		return fmt.Sprintf("http://%s:%d%s", server.Host, server.Port, a.Path)
 	}
 }
