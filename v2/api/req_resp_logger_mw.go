@@ -18,11 +18,12 @@ type RequestResponseLog struct {
 	RequestBodyBytes  []byte
 	ResponseBodyBytes []byte
 	TimeTakenMs       int64
+	Status            int
 }
 
 func (r *RequestResponseLog) String() string {
 	var logBuilder strings.Builder
-	logBuilder.WriteString(fmt.Sprintf("URL:\n %s TimeMs=%d\n", r.URL, r.TimeTakenMs))
+	logBuilder.WriteString(fmt.Sprintf("URL:\n %s  Status=%d, TimeMs=%d\n", r.URL, r.Status, r.TimeTakenMs))
 	logBuilder.WriteString(fmt.Sprintf("Request Headers:\n %v\n", r.RequestHeaders))
 	logBuilder.WriteString(fmt.Sprintf("Request Body:\n %s\n", r.RequestBodyBytes))
 	logBuilder.WriteString(fmt.Sprintf("Response Headers:\n %v\n", r.ResponseHeaders))
@@ -83,6 +84,7 @@ func RequestResponseLoggerMiddleware(logFunc func(*gin.Context, *RequestResponse
 
 		// Report log
 		log := &RequestResponseLog{
+			Status:           responseBodyWriter.Status(),
 			URL:              c.Request.URL.String(),
 			RequestHeaders:   requestHeaders,
 			ResponseHeaders:  responseHeaders,
