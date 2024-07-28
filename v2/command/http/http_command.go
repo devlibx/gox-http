@@ -59,6 +59,13 @@ func (h *HttpCommand) ExecuteAsync(ctx context.Context, request *command.GoxRequ
 
 func (h *HttpCommand) Execute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error) {
 
+	// Run a registered pre-request interceptor
+	if EnablePreRequestInterceptor {
+		if stop, resp, err := h.interceptPreRequestInterceptor(ctx, request); stop {
+			return resp, err
+		}
+	}
+
 	response, err := h.internalExecute(ctx, request)
 
 	// Log HTTP metrics
