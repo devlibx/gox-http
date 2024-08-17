@@ -59,9 +59,9 @@ jobs:
           new_version="v${major_version}.${minor_version}.${new_patch_version}"
           # echo "New version: $new_version"
           
-          new_v3_version="v3.${minor_version}.${new_patch_version}"
-          echo "New V3 version: $new_v3_version"
+          new_v4_version="v4.${minor_version}.${new_patch_version}"
+          echo "New V4 version: $new_v4_version"
           
           # Create a new tag and push 
           # git tag $new_version; git push --tags
-          git tag $new_v3_version; git push --tags
+          git tag $new_v4_version; git push --tags
