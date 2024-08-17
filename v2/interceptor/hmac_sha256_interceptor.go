@@ -7,7 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"github.com/devlibx/gox-base/errors"
+	"github.com/devlibx/gox-base/v2/errors"
 	"github.com/go-resty/resty/v2"
 	"log/slog"
 	"sort"

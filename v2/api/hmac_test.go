@@ -3,9 +3,9 @@ package goxHttpApi
 import (
 	"context"
 	"fmt"
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/serialization"
-	"github.com/devlibx/gox-base/test"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/serialization"
+	"github.com/devlibx/gox-base/v2/test"
 	"github.com/devlibx/gox-http/v2/command"
 	"github.com/devlibx/gox-http/v2/interceptor"
 	"github.com/devlibx/gox-http/v2/testhelper"

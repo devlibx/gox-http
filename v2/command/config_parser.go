@@ -1,10 +1,10 @@
 package command
 
 import (
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/errors"
-	"github.com/devlibx/gox-base/serialization"
-	"github.com/devlibx/gox-base/util"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/errors"
+	"github.com/devlibx/gox-base/v2/serialization"
+	"github.com/devlibx/gox-base/v2/util"
 	"github.com/devlibx/gox-http/v2/interceptor"
 )
 

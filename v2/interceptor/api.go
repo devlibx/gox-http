@@ -2,8 +2,8 @@ package interceptor
 
 import (
 	"context"
-	"github.com/devlibx/gox-base/errors"
-	"github.com/devlibx/gox-base/serialization"
+	"github.com/devlibx/gox-base/v2/errors"
+	"github.com/devlibx/gox-base/v2/serialization"
 )
 
 type Config struct {

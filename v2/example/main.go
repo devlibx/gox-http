@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/serialization"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/serialization"
 	goxHttpApi "github.com/devlibx/gox-http/v2/api"
 	"github.com/devlibx/gox-http/v2/command"
 	"log/slog"

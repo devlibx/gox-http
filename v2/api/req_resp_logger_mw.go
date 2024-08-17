@@ -3,7 +3,7 @@ package goxHttpApi
 import (
 	"bytes"
 	"fmt"
-	"github.com/devlibx/gox-base"
+	"github.com/devlibx/gox-base/v2"
 	"github.com/gin-gonic/gin"
 	"io"
 	"log/slog"

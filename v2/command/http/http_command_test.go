@@ -3,8 +3,7 @@ package httpCommand
 import (
 	"context"
 	"fmt"
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/test"
+	"github.com/devlibx/gox-base/v2/test"
 	"github.com/devlibx/gox-http/v2/command"
 	"github.com/devlibx/gox-http/v2/testhelper"
 	"github.com/stretchr/testify/assert"

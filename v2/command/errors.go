@@ -2,7 +2,7 @@ package command
 
 import (
 	"fmt"
-	"github.com/devlibx/gox-base/util"
+	"github.com/devlibx/gox-base/v2/util"
 	"net/http"
 )
 

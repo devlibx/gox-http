@@ -2,8 +2,8 @@ package goxHttpApi
 
 import (
 	"context"
-	"github.com/devlibx/gox-base/errors"
-	"github.com/devlibx/gox-base/serialization"
+	"github.com/devlibx/gox-base/v2/errors"
+	"github.com/devlibx/gox-base/v2/serialization"
 	"github.com/devlibx/gox-http/v2/command"
 	"github.com/opentracing/opentracing-go"
 	"log/slog"

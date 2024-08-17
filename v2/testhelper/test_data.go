@@ -2,7 +2,7 @@ package testhelper
 
 import (
 	_ "embed"
-	"github.com/devlibx/gox-base/serialization"
+	"github.com/devlibx/gox-base/v2/serialization"
 )
 
 func GetTestConfig(config interface{}) error {
