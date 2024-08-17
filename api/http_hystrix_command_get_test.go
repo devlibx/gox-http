@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/afex/hystrix-go/hystrix"
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/serialization"
-	"github.com/devlibx/gox-base/test"
-	"github.com/devlibx/gox-http/command"
-	httpCommand "github.com/devlibx/gox-http/command/http"
-	"github.com/devlibx/gox-http/testhelper"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/serialization"
+	"github.com/devlibx/gox-base/v2/test"
+	"github.com/devlibx/gox-http/v3/command"
+	httpCommand "github.com/devlibx/gox-http/v3/command/http"
+	"github.com/devlibx/gox-http/v3/testhelper"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -54,7 +54,7 @@ func Test_Hystrix_Get_Success(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err := goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+	response, err := goxHttpCtx.Execute(ctx, request)
 	assert.NoError(t, err)
 	assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
 }
@@ -97,7 +97,7 @@ func Test_Hystrix_Get_Timeout_WhenHttpCallTimeoutFirst(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	_, err = goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+	_, err = goxHttpCtx.Execute(ctx, request)
 	assert.Error(t, err)
 	if e, ok := err.(*command.GoxHttpError); ok {
 		assert.Equal(t, "request_timeout_on_client", e.ErrorCode)
@@ -146,8 +146,8 @@ func Test_Hystrix_Get_Timeout_WhenHystrixTimeoutHappensBeforeHttpTimeout(t *test
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	_, err = goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
-	assert.Error(t, err)
+	_, err = goxHttpCtx.Execute(ctx, request)
+	assert.Error(t, err, "did not expected error")
 	if e, ok := err.(*command.GoxHttpError); ok {
 		assert.Equal(t, "hystrix_timeout", e.ErrorCode)
 	} else {
@@ -192,7 +192,7 @@ func Test_Hystrix_Get_With_Acceptable_Status_Code(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err := goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+	response, err := goxHttpCtx.Execute(ctx, request)
 	assert.NoError(t, err)
 	assert.Equal(t, 401, response.StatusCode)
 	assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
@@ -232,7 +232,7 @@ func Test_Hystrix_Get_With_Unacceptable_Status_Code(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	_, err = goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+	_, err = goxHttpCtx.Execute(ctx, request)
 	assert.Error(t, err)
 }
 
@@ -272,7 +272,7 @@ func Test_Hystrix_Get_Verify_Circuit_Will_Open_On_Too_ManyErrors(t *testing.T) {
 			WithPathParam("id", 1).
 			WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 			Build()
-		_, err = goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+		_, err = goxHttpCtx.Execute(ctx, request)
 		assert.Error(t, err)
 		if e, ok := err.(*command.GoxHttpError); ok {
 			if e.IsHystrixCircuitOpenError() {
@@ -327,7 +327,7 @@ func Test_Hystrix_Get_Verify_Circuit_Will_Open_Due_To_Timeout(t *testing.T) {
 			WithPathParam("id", 1).
 			WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 			Build()
-		_, err = goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+		_, err = goxHttpCtx.Execute(ctx, request)
 		assert.Error(t, err)
 		if e, ok := err.(*command.GoxHttpError); ok {
 			if e.IsHystrixCircuitOpenError() {
@@ -389,7 +389,7 @@ func Test_Hystrix_Get_Verify_We_Go_Too_Many_Requests(t *testing.T) {
 				WithPathParam("id", 1).
 				WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 				Build()
-			_, err = goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+			_, err = goxHttpCtx.Execute(ctx, request)
 			if err != nil {
 				if e, ok := err.(*command.GoxHttpError); ok {
 					if e.IsHystrixRejectedError() {

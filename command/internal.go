@@ -2,9 +2,9 @@ package command
 
 import (
 	"fmt"
-	"github.com/devlibx/gox-base/errors"
-	"github.com/devlibx/gox-base/serialization"
-	"github.com/devlibx/gox-base/util"
+	"github.com/devlibx/gox-base/v2/errors"
+	"github.com/devlibx/gox-base/v2/serialization"
+	"github.com/devlibx/gox-base/v2/util"
 	"net/http"
 	"strconv"
 	"strings"
@@ -223,7 +223,7 @@ func (b *goxRequestBuilder) Build() *GoxRequest {
 
 func NewGoxRequestBuilder(api string) *goxRequestBuilder {
 	return &goxRequestBuilder{
-		request: &GoxRequest{},
+		request: &GoxRequest{Api: api},
 		api:     api,
 	}
 }

@@ -1,10 +1,11 @@
 package command
 
 import (
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/errors"
-	"github.com/devlibx/gox-base/serialization"
-	"github.com/devlibx/gox-base/util"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/errors"
+	"github.com/devlibx/gox-base/v2/serialization"
+	"github.com/devlibx/gox-base/v2/util"
+	"github.com/devlibx/gox-http/v3/interceptor"
 )
 
 func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -63,6 +64,12 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 					s.Headers = _m
 				}
 			}
+			if m, ok := valueMap["interceptor_config"].(map[string]interface{}); ok {
+				s.InterceptorConfig = &interceptor.Config{}
+				if err := s.InterceptorConfig.PopulateFromMap(m, "server="+name); err != nil {
+					return err
+				}
+			}
 		}
 	}
 
@@ -87,6 +94,7 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			var acceptable_codes = serialization.ParameterizedValue(valueMap.StringOrDefault("acceptable_codes", "200,201"))
 			var retry_count = serialization.ParameterizedValue(valueMap.StringOrDefault("retry_count", "0"))
 			var retry_initial_wait_time_ms = serialization.ParameterizedValue(valueMap.StringOrDefault("retry_initial_wait_time_ms", "1"))
+			var enable_request_response = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_request_response_logging", "false"))
 
 			if a.Path, err = path.GetString(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing path property for api=%s", name)
@@ -114,6 +122,15 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			}
 			if a.InitialRetryWaitTimeMs, err = retry_initial_wait_time_ms.GetInt(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing retry_initial_wait_time_ms property for api=%s", name)
+			}
+			if m, ok := valueMap["interceptor_config"].(map[string]interface{}); ok {
+				a.InterceptorConfig = &interceptor.Config{}
+				if err := a.InterceptorConfig.PopulateFromMap(m, "api="+name); err != nil {
+					return err
+				}
+			}
+			if a.EnableRequestResponseLogging, err = enable_request_response.GetBool(e.Env); err != nil {
+				return errors.Wrap(err, "error is parsing enable_request_response_logging property for api=%s", name)
 			}
 		}
 	}

@@ -3,10 +3,10 @@ package goxHttpApi
 import (
 	"context"
 	"fmt"
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/errors"
-	"github.com/devlibx/gox-http/command"
-	httpCommand "github.com/devlibx/gox-http/command/http"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/errors"
+	"github.com/devlibx/gox-http/v3/command"
+	httpCommand "github.com/devlibx/gox-http/v3/command/http"
 	"go.uber.org/zap"
 	"net/http"
 	"sync"
@@ -23,7 +23,8 @@ type goxHttpContextImpl struct {
 	lock     *sync.Mutex
 }
 
-func (g *goxHttpContextImpl) Execute(ctx context.Context, api string, request *command.GoxRequest) (*command.GoxResponse, error) {
+func (g *goxHttpContextImpl) Execute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error) {
+	api := request.Api
 	if cmd, ok := g.commands[api]; !ok {
 		return nil, &command.GoxHttpError{
 			Err:        ErrCommandNotRegisteredForApi,

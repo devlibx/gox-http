@@ -2,9 +2,9 @@ package goxHttpApi
 
 import (
 	"context"
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/errors"
-	"github.com/devlibx/gox-http/command"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/errors"
+	"github.com/devlibx/gox-http/v3/command"
 	"sync"
 )
 
@@ -15,8 +15,7 @@ var ErrCommandNotRegisteredForApi = errors.New("api not found")
 // GoxHttpContext is the interface to be used by external clients
 type GoxHttpContext interface {
 	ReloadApi(apiToReload string) error
-	Execute(ctx context.Context, api string, request *command.GoxRequest) (*command.GoxResponse, error)
-	ExecuteAsync(ctx context.Context, api string, request *command.GoxRequest) chan *command.GoxResponse
+	Execute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error)
 }
 
 // NewGoxHttpContext - Create a new http context to be used

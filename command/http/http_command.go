@@ -3,10 +3,11 @@ package httpCommand
 import (
 	"context"
 	"fmt"
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/errors"
-	"github.com/devlibx/gox-base/serialization"
-	"github.com/devlibx/gox-http/command"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/errors"
+	"github.com/devlibx/gox-base/v2/serialization"
+	"github.com/devlibx/gox-http/v3/command"
+	"github.com/devlibx/gox-http/v3/interceptor"
 	"github.com/go-resty/resty/v2"
 	_ "github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
@@ -21,6 +22,7 @@ import (
 
 var EnableGoxHttpMetricLogging = false
 var EnableTimeTakenByHttpCall = false
+var EnableRequestResponseBodyLogging = false
 var EnableRestyDebug = false
 
 // StartSpanFromContext is added for someone to override the implementation
@@ -30,6 +32,8 @@ type StartSpanFromContext func(ctx context.Context, operationName string, opts .
 var DefaultStartSpanFromContextFunc StartSpanFromContext = func(ctx context.Context, operationName string, opts ...opentracing.StartSpanOption) (opentracing.Span, context.Context) {
 	return opentracing.StartSpanFromContext(ctx, operationName, opts...)
 }
+
+var ContextBasedHeaderPrefix = "__request_scope_headers__"
 
 type HttpCommand struct {
 	gox.CrossFunction
@@ -54,6 +58,13 @@ func (h *HttpCommand) ExecuteAsync(ctx context.Context, request *command.GoxRequ
 }
 
 func (h *HttpCommand) Execute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error) {
+
+	// Run a registered pre-request interceptor
+	if EnablePreRequestInterceptor {
+		if stop, resp, err := h.interceptPreRequestInterceptor(ctx, request); stop {
+			return resp, err
+		}
+	}
 
 	response, err := h.internalExecute(ctx, request)
 
@@ -101,7 +112,9 @@ func (h *HttpCommand) internalExecute(ctx context.Context, request *command.GoxR
 
 	// Create the url to call
 	finalUrlToRequest := h.api.GetPath(h.server)
-	h.debugLogger.Debug("got request to execute", zap.Stringer("request", request), zap.String("url", finalUrlToRequest))
+	if !EnableRequestResponseBodyLogging {
+		h.debugLogger.Debug("got request to execute", zap.Stringer("request", request), zap.String("url", finalUrlToRequest))
+	}
 
 	start := time.Now()
 	switch strings.ToUpper(h.api.Method) {
@@ -119,6 +132,14 @@ func (h *HttpCommand) internalExecute(ctx context.Context, request *command.GoxR
 	end := time.Now()
 	if EnableTimeTakenByHttpCall {
 		h.logger.Info("Time taken: ", zap.Int64("time_taken", end.UnixMilli()-start.UnixMilli()), zap.Int64("start", start.UnixMilli()), zap.Int64("end", end.UnixMilli()), zap.String("url", finalUrlToRequest))
+	}
+
+	if EnableRequestResponseBodyLogging {
+		if response.Body() != nil && len(response.Body()) > 0 {
+			h.debugLogger.Debug("request/response of http call", zap.String("url", finalUrlToRequest), zap.Stringer("request", request), zap.String("response", string(response.Body())), zap.Int("response_code", response.StatusCode()))
+		} else {
+			h.debugLogger.Debug("request/response of http call", zap.String("url", finalUrlToRequest), zap.Stringer("request", request), zap.Int("response_code", response.StatusCode()))
+		}
 	}
 
 	if err != nil {
@@ -209,6 +230,15 @@ func (h *HttpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 		}
 	}
 
+	// Add request scope header
+	if ctx.Value(ContextBasedHeaderPrefix) != nil {
+		if requestScopeHeaders, ok := ctx.Value(ContextBasedHeaderPrefix).(map[string]interface{}); ok {
+			for k, v := range requestScopeHeaders {
+				r.SetHeader(k, fmt.Sprintf("%v", v))
+			}
+		}
+	}
+
 	// Set query param
 	if request.QueryParam != nil {
 		for name, values := range request.QueryParam {
@@ -240,7 +270,7 @@ func (h *HttpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 				ErrorCode:  command.ErrorCodeFailedToBuildRequest,
 			}
 		}
-	} else {
+	} else if request.Body != nil {
 		if b, err := serialization.Stringify(request.Body); err == nil {
 			r.SetBody(b)
 		} else {
@@ -251,6 +281,36 @@ func (h *HttpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 				ErrorCode:  command.ErrorCodeFailedToBuildRequest,
 			}
 		}
+	}
+
+	return h.intercept(ctx, r)
+}
+func (h *HttpCommand) intercept(ctx context.Context, r *resty.Request) (*resty.Request, error) {
+
+	// Get the valid config from server and api
+	var interceptorConfig *interceptor.Config
+	if h.server.InterceptorConfig != nil && !h.server.InterceptorConfig.Disabled {
+		interceptorConfig = h.server.InterceptorConfig
+	} else if h.api.InterceptorConfig != nil && !h.api.InterceptorConfig.Disabled {
+		interceptorConfig = h.api.InterceptorConfig
+	} else {
+		return r, nil
+	}
+
+	// Before we move forward, lets intercept this request and enrich it if required
+	in := interceptor.NewInterceptor(interceptorConfig)
+	if _, enabled := in.Info(); !enabled {
+		return r, nil
+	}
+
+	// Name to log error
+	name, _ := in.Info()
+
+	// Intercept body and update if required
+	if requestModified, modifiedRequest, err := in.Intercept(ctx, r); err != nil {
+		return nil, errors.Wrap(err, "failed to intercept request body using interceptor: name=%s", name)
+	} else if requestModified {
+		return modifiedRequest.(*resty.Request), nil
 	}
 
 	return r, nil
@@ -375,7 +435,7 @@ func NewHttpCommand(cf gox.CrossFunction, server *command.Server, api *command.A
 	c.client.SetTimeout(time.Duration(api.Timeout) * time.Millisecond)
 
 	// If Resty Debug is enabled then we will dump request response
-	if EnableRestyDebug {
+	if EnableRestyDebug || api.EnableRequestResponseLogging {
 		c.client.SetDebug(true)
 	}
 

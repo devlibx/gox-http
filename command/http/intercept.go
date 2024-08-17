@@ -2,7 +2,7 @@ package httpCommand
 
 import (
 	"context"
-	"github.com/devlibx/gox-http/v2/command"
+	"github.com/devlibx/gox-http/v3/command"
 	"sync"
 )
 

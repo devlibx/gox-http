@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/serialization"
-	goxHttpApi "github.com/devlibx/gox-http/api"
-	"github.com/devlibx/gox-http/command"
-	"github.com/devlibx/gox-http/example/perf/helper"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/serialization"
+	goxHttpApi "github.com/devlibx/gox-http/v3/api"
+	"github.com/devlibx/gox-http/v3/command"
+	"github.com/devlibx/gox-http/v3/example/perf/helper"
 	"github.com/go-resty/resty/v2"
 	dwMetric "github.com/rcrowley/go-metrics"
 	"log"
@@ -87,7 +87,7 @@ func main() {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err := goxHttpCtx.Execute(context.Background(), "getPosts", request)
+	response, err := goxHttpCtx.Execute(context.Background(), request)
 	if err != nil {
 
 		// Error details can be extracted from *command.GoxHttpError
@@ -179,7 +179,7 @@ func makeGoxHttpCall(goxHttpCtx goxHttpApi.GoxHttpContext, counter dwMetric.Coun
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err := goxHttpCtx.Execute(context.Background(), "delay_10_ms", request)
+	response, err := goxHttpCtx.Execute(context.Background(), request)
 	if err == nil {
 		counter.Inc(1)
 	} else {

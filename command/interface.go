@@ -3,8 +3,9 @@ package command
 import (
 	"context"
 	"fmt"
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/serialization"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/serialization"
+	"github.com/devlibx/gox-http/v3/interceptor"
 	"net/http"
 )
 
@@ -27,6 +28,7 @@ type Server struct {
 	ConnectionRequestTimeout int                    `yaml:"connection_request_timeout"`
 	Properties               map[string]interface{} `yaml:"properties"`
 	Headers                  map[string]interface{} `yaml:"headers"`
+	InterceptorConfig        *interceptor.Config    `yaml:"interceptor_config"`
 }
 
 // List of all APIs
@@ -38,20 +40,22 @@ type Apis map[string]*Api
 // If you change anything here (add/update/delete) you must make changes in UnmarshalYAML()
 // ****************************************************************************************
 type Api struct {
-	Name                   string
-	Method                 string            `yaml:"method"`
-	Path                   string            `yaml:"path"`
-	Server                 string            `yaml:"server"`
-	Timeout                int               `yaml:"timeout"`
-	Concurrency            int               `yaml:"concurrency"`
-	QueueSize              int               `yaml:"queue_size"`
-	Async                  bool              `yaml:"async"`
-	AcceptableCodes        string            `yaml:"acceptable_codes"`
-	RetryCount             int               `yaml:"retry_count"`
-	InitialRetryWaitTimeMs int               `yaml:"retry_initial_wait_time_ms"`
-	Headers                map[string]string `yaml:"headers"`
-	acceptableCodes        []int
-	DisableHystrix         bool
+	Name                         string
+	Method                       string              `yaml:"method"`
+	Path                         string              `yaml:"path"`
+	Server                       string              `yaml:"server"`
+	Timeout                      int                 `yaml:"timeout"`
+	Concurrency                  int                 `yaml:"concurrency"`
+	QueueSize                    int                 `yaml:"queue_size"`
+	Async                        bool                `yaml:"async"`
+	AcceptableCodes              string              `yaml:"acceptable_codes"`
+	RetryCount                   int                 `yaml:"retry_count"`
+	InitialRetryWaitTimeMs       int                 `yaml:"retry_initial_wait_time_ms"`
+	Headers                      map[string]string   `yaml:"headers"`
+	InterceptorConfig            *interceptor.Config `yaml:"interceptor_config"`
+	EnableRequestResponseLogging bool                `yaml:"enable_request_response_logging"`
+	acceptableCodes              []int
+	DisableHystrix               bool
 }
 
 func (a *Api) GetTimeoutWithRetryIncluded() int {
@@ -100,6 +104,7 @@ type ResponseBuilder interface {
 }
 
 type GoxRequest struct {
+	Api             string          `json:"-"`
 	Header          http.Header     `json:"-"`
 	PathParam       MultivaluedMap  `json:"path_param,omitempty"`
 	QueryParam      MultivaluedMap  `json:"query_param,omitempty"`

@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	command "github.com/devlibx/gox-http/command"
+	command "github.com/devlibx/gox-http/v3/command"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -36,32 +36,18 @@ func (m *MockGoxHttpContext) EXPECT() *MockGoxHttpContextMockRecorder {
 }
 
 // Execute mocks base method.
-func (m *MockGoxHttpContext) Execute(ctx context.Context, api string, request *command.GoxRequest) (*command.GoxResponse, error) {
+func (m *MockGoxHttpContext) Execute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Execute", ctx, api, request)
+	ret := m.ctrl.Call(m, "Execute", ctx, request)
 	ret0, _ := ret[0].(*command.GoxResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Execute indicates an expected call of Execute.
-func (mr *MockGoxHttpContextMockRecorder) Execute(ctx, api, request interface{}) *gomock.Call {
+func (mr *MockGoxHttpContextMockRecorder) Execute(ctx, request interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockGoxHttpContext)(nil).Execute), ctx, api, request)
-}
-
-// ExecuteAsync mocks base method.
-func (m *MockGoxHttpContext) ExecuteAsync(ctx context.Context, api string, request *command.GoxRequest) chan *command.GoxResponse {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExecuteAsync", ctx, api, request)
-	ret0, _ := ret[0].(chan *command.GoxResponse)
-	return ret0
-}
-
-// ExecuteAsync indicates an expected call of ExecuteAsync.
-func (mr *MockGoxHttpContextMockRecorder) ExecuteAsync(ctx, api, request interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteAsync", reflect.TypeOf((*MockGoxHttpContext)(nil).ExecuteAsync), ctx, api, request)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockGoxHttpContext)(nil).Execute), ctx, request)
 }
 
 // ReloadApi mocks base method.

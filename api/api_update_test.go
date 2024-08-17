@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/afex/hystrix-go/hystrix"
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/serialization"
-	"github.com/devlibx/gox-base/test"
-	"github.com/devlibx/gox-http/command"
-	httpCommand "github.com/devlibx/gox-http/command/http"
-	"github.com/devlibx/gox-http/testhelper"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/serialization"
+	"github.com/devlibx/gox-base/v2/test"
+	"github.com/devlibx/gox-http/v3/command"
+	httpCommand "github.com/devlibx/gox-http/v3/command/http"
+	"github.com/devlibx/gox-http/v3/testhelper"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -53,7 +53,7 @@ func Test_Hystrix_Update(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err := goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+	response, err := goxHttpCtx.Execute(ctx, request)
 	assert.NoError(t, err)
 	assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
 	assert.Equal(t, "/delay", response.AsStringObjectMapOrEmpty().StringOrEmpty("url"))
@@ -71,7 +71,7 @@ func Test_Hystrix_Update(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err = goxHttpCtx.Execute(ctx, "delay_timeout_10", request)
+	response, err = goxHttpCtx.Execute(ctx, request)
 	assert.NoError(t, err)
 	assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
 	assert.Equal(t, "/delay_new", response.AsStringObjectMapOrEmpty().StringOrEmpty("url"))
@@ -97,7 +97,7 @@ func Test_Hystrix_Update(t *testing.T) {
 		WithPathParam("id", 1).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
-	response, err = goxHttpCtx.Execute(ctx, "new_api", request)
+	response, err = goxHttpCtx.Execute(ctx, request)
 	assert.NoError(t, err)
 	assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
 	assert.Equal(t, "/bad_new", response.AsStringObjectMapOrEmpty().StringOrEmpty("url"))
