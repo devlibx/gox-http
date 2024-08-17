@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/devlibx/gox-base/v2/errors"
 	"github.com/devlibx/gox-base/v2/serialization"
-	"github.com/devlibx/gox-http/v3/command"
+	"github.com/devlibx/gox-http/v4/command"
 	"github.com/opentracing/opentracing-go"
 	"log/slog"
 	"net/http"

@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/devlibx/gox-base/v2/test"
-	"github.com/devlibx/gox-http/v3/command"
-	"github.com/devlibx/gox-http/v3/testhelper"
+	"github.com/devlibx/gox-http/v4/command"
+	"github.com/devlibx/gox-http/v4/testhelper"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

@@ -5,7 +5,7 @@ import (
 	"github.com/devlibx/gox-base/v2/errors"
 	"github.com/devlibx/gox-base/v2/serialization"
 	"github.com/devlibx/gox-base/v2/util"
-	"github.com/devlibx/gox-http/v3/interceptor"
+	"github.com/devlibx/gox-http/v4/interceptor"
 )
 
 func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {

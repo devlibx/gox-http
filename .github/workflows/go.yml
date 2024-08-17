@@ -2,9 +2,9 @@ name: Go
 
 on:
   push:
-    branches: [ v3 ]
+    branches: [ v4 ]
   pull_request:
-    branches: [ v3 ]
+    branches: [ v4 ]
 
 jobs:
 
@@ -45,7 +45,7 @@ jobs:
       - name: Bump version and push tag
         run: |
           # Get the latest version of v0.*.* tag
-          version_to_use=$(git tag -l 'v3.*.*' | sort -V | tail -n 1)
+          version_to_use=$(git tag -l 'v4.*.*' | sort -V | tail -n 1)
           echo "Current version: $version_to_use"
           
           # Remove the leading 'v' and split the version string into components

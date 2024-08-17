@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	command "github.com/devlibx/gox-http/v3/command"
+	command "github.com/devlibx/gox-http/v4/command"
 	gomock "github.com/golang/mock/gomock"
 )
 

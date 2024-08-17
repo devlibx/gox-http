@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/devlibx/gox-base/v2"
 	"github.com/devlibx/gox-base/v2/serialization"
-	"github.com/devlibx/gox-http/v3/interceptor"
+	"github.com/devlibx/gox-http/v4/interceptor"
 	"net/http"
 )
 

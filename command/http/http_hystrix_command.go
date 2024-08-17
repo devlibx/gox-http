@@ -8,7 +8,7 @@ import (
 	"github.com/afex/hystrix-go/hystrix"
 	"github.com/devlibx/gox-base/v2"
 	goxError "github.com/devlibx/gox-base/v2/errors"
-	"github.com/devlibx/gox-http/v3/command"
+	"github.com/devlibx/gox-http/v4/command"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 	"net/http"

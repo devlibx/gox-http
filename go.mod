@@ -1,4 +1,4 @@
-module github.com/devlibx/gox-http/v3
+module github.com/devlibx/gox-http/v4
 
 go 1.21
 

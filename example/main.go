@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/devlibx/gox-base/v2"
 	"github.com/devlibx/gox-base/v2/serialization"
-	goxHttpApi "github.com/devlibx/gox-http/v3/api"
-	"github.com/devlibx/gox-http/v3/command"
+	goxHttpApi "github.com/devlibx/gox-http/v4/api"
+	"github.com/devlibx/gox-http/v4/command"
 	"log/slog"
 )
 

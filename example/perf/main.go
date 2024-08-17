@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/devlibx/gox-http/v3/example/perf/helper"
+	"github.com/devlibx/gox-http/v4/example/perf/helper"
 	"time"
 )
 
