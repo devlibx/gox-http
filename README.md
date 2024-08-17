@@ -10,6 +10,22 @@ Gox Http provides utility to call a http endpoint. It provides following:
 5. acceptable_codes - list of "," separated status codes which are acceptable. These status codes will not be counted as
    errors and will not open hystrix circuit
 
+##### Important
+1. Use `v4.*.*` branches for go `21` and `21+` project
+2. If you use other gox libs then use the following
+```
+github.com/devlibx/gox-base/v2       v2.0.*  
+github.com/devlibx/gox-http/v4       v4.0.*
+github.com/devlibx/gox-messaging/v2  v2.0.*
+github.com/devlibx/gox-metrics/v2    v2.0.*
+
+You can use these commands to change imports in your project to work with the new `v4`. You can run these and can do `go mod tidy` you will get the latest versions.
+find . -type f -name "*.go" -exec sed -i '' 's|github.com/devlibx/gox-base|github.com/devlibx/gox-base/v2|g' {} +
+find . -type f -name "*.go" -exec sed -i '' 's|github.com/devlibx/gox-http/v2|github.com/devlibx/gox-http/v4|g' {} +
+find . -type f -name "*.go" -exec sed -i '' 's|github.com/devlibx/gox-messaging|github.com/devlibx/gox-messaging/v2|g' {} +
+find . -type f -name "*.go" -exec sed -i '' 's|github.com/devlibx/gox-metrics|github.com/devlibx/gox-metrics/v2|g' {} +
+````
+
 #### How to use
 
 Given below is a example on how to use this liberary
