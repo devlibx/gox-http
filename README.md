@@ -249,3 +249,39 @@ servers:
           headers_to_include_in_signature: [x-header-1, x-header-2]
           convert_header_keys_to_lower_case: true
 ```
+
+#### Error Handling
+You can register `RequestValidatorErrorHandlingMiddleware` in your router to get common error handler for bad request.
+```go
+type User struct {
+    Name       string   `json:"name" binding:"required,max=10"`
+    Email      string   `json:"email" binding:"required,email"`
+    Address    Address  `json:"address" binding:"required"`
+    AddressPtr *Address `json:"address_ptr" binding:"required"`
+}
+
+type Address struct {
+    FlatNo int `json:"flat_no" binding:"required"`
+}
+
+// Register middleware to handle bad request
+r := gin.Default()
+r.Use(RequestValidatorErrorHandlingMiddleware(DoNotSkipRequestValidationFunc, nil))
+
+// Use this middleware to handle error 
+var user User
+if err := c.ShouldBindJSON(&user); err != nil {
+    _ = c.AbortWithError(http.StatusBadRequest, err)
+}
+```
+
+```json
+{
+    "status": 400,
+    "error_mapping_info": {
+        "User.Address.FlatNo": "Error:Field validation for 'FlatNo' failed on the 'required' tag",
+        "User.AddressPtr": "Error:Field validation for 'AddressPtr' failed on the 'required' tag",
+        "User.Email": "Error:Field validation for 'Email' failed on the 'required' tag"
+    }
+}
+```
