@@ -7,6 +7,7 @@ import (
 	"github.com/devlibx/gox-base/serialization"
 	goxHttpApi "github.com/devlibx/gox-http/v2/api"
 	"github.com/devlibx/gox-http/v2/command"
+	httpCommand "github.com/devlibx/gox-http/v2/command/http"
 	"github.com/devlibx/gox-http/v2/example/perf/helper"
 	"github.com/go-resty/resty/v2"
 	dwMetric "github.com/rcrowley/go-metrics"
@@ -49,6 +50,7 @@ apis:
 `
 
 func main() {
+	httpCommand.EnableTimeTakenByHttpCall = true
 	// run perf test
 	if true {
 		// perfMainWithGoxHttp()
@@ -85,6 +87,8 @@ func main() {
 	request := command.NewGoxRequestBuilder("getPosts").
 		WithContentTypeJson().
 		WithPathParam("id", 1).
+		WithQueryParam("name", "test").
+		WithQueryParam("age", 10).
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
 	response, err := goxHttpCtx.Execute(context.Background(), request)

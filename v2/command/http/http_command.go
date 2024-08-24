@@ -131,7 +131,11 @@ func (h *HttpCommand) internalExecute(ctx context.Context, request *command.GoxR
 	}
 	end := time.Now()
 	if EnableTimeTakenByHttpCall {
-		h.logger.Info("Time taken: ", zap.Int64("time_taken", end.UnixMilli()-start.UnixMilli()), zap.Int64("start", start.UnixMilli()), zap.Int64("end", end.UnixMilli()), zap.String("url", finalUrlToRequest))
+		urlToPrint := finalUrlToRequest
+		if response != nil && response.Request != nil && response.Request.URL != "" {
+			urlToPrint = response.Request.URL
+		}
+		h.logger.Info("Time taken: ", zap.Int64("time_taken", end.UnixMilli()-start.UnixMilli()), zap.Int64("start", start.UnixMilli()), zap.Int64("end", end.UnixMilli()), zap.String("url", urlToPrint))
 	}
 
 	if EnableRequestResponseBodyLogging {
