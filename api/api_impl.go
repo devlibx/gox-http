@@ -7,6 +7,7 @@ import (
 	"github.com/devlibx/gox-base/v2/errors"
 	"github.com/devlibx/gox-http/v4/command"
 	httpCommand "github.com/devlibx/gox-http/v4/command/http"
+	"github.com/go-resty/resty/v2"
 	"go.uber.org/zap"
 	"net/http"
 	"sync"
@@ -159,4 +160,27 @@ func (g *goxHttpContextImpl) updateAPi(api *command.Api) error {
 	g.timeouts[apiName] = api.Timeout
 
 	return nil
+}
+
+// GetRestyClient method will return underlying resty client if it uses it, provided the
+// api name
+//
+// Parameters:
+// - api: name of the api for which resty client is needed
+//
+// Returns:
+// - resty client if this command is implemented using resty client under the hood
+// - bool - true if resty client is returned otherwise false
+func (g *goxHttpContextImpl) GetRestyClient(api string) (*resty.Client, bool) {
+	if cmd, ok := g.commands[api]; ok {
+		if hc, ok := cmd.(*httpCommand.HttpCommand); ok {
+			return hc.GetRestyClient()
+		} else if hhc, ok := cmd.(*httpCommand.HttpHystrixCommand); ok {
+			return hhc.GetRestyClient()
+		} else {
+			return nil, false
+		}
+	} else {
+		return nil, false
+	}
 }

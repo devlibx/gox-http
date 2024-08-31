@@ -11,6 +11,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	dwMetric "github.com/rcrowley/go-metrics"
 	"log"
+	"log/slog"
 	"os"
 	"time"
 )
@@ -71,6 +72,14 @@ func main() {
 	if err != nil {
 		log.Println("got error in creating gox http context config", err)
 		return
+	}
+
+	// Test goxHttpCtx as a resty client provider
+	if rc, ok := goxHttpApi.GetRestyClientFromGoxHttpCtx(goxHttpCtx, "getPosts"); ok {
+		rc.OnBeforeRequest(func(client *resty.Client, request *resty.Request) error {
+			slog.Info("Resty: Before Request function called", slog.String("url", request.URL))
+			return nil
+		})
 	}
 
 	// Make a http call and get the result

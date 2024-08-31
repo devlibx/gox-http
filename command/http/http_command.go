@@ -45,6 +45,14 @@ type HttpCommand struct {
 	setRetryFuncOnce *sync.Once
 }
 
+// GetRestyClient method will return underlying resty client if it uses it
+// Returns:
+// - resty client if this command is implemented using resty client under the hood
+// - bool - true if resty client is returned otherwise false
+func (h *HttpCommand) GetRestyClient() (*resty.Client, bool) {
+	return h.client, true
+}
+
 func (h *HttpCommand) ExecuteAsync(ctx context.Context, request *command.GoxRequest) chan *command.GoxResponse {
 	responseChannel := make(chan *command.GoxResponse)
 	go func() {
@@ -394,8 +402,9 @@ func (h *HttpCommand) handleError(err error) *command.GoxResponse {
 	var responseObject *command.GoxResponse
 
 	// Timeout errors are handled here
-	switch e := err.(type) {
-	case net.Error:
+	var e net.Error
+	switch {
+	case errors.As(err, &e):
 		if e.Timeout() {
 			responseObject = &command.GoxResponse{
 				StatusCode: http.StatusRequestTimeout,
