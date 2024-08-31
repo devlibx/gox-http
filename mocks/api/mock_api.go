@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	command "github.com/devlibx/gox-http/command"
+	resty "github.com/go-resty/resty/v2"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -76,4 +77,42 @@ func (m *MockGoxHttpContext) ReloadApi(apiToReload string) error {
 func (mr *MockGoxHttpContextMockRecorder) ReloadApi(apiToReload interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReloadApi", reflect.TypeOf((*MockGoxHttpContext)(nil).ReloadApi), apiToReload)
+}
+
+// MockRestyClientProvider is a mock of RestyClientProvider interface.
+type MockRestyClientProvider struct {
+	ctrl     *gomock.Controller
+	recorder *MockRestyClientProviderMockRecorder
+}
+
+// MockRestyClientProviderMockRecorder is the mock recorder for MockRestyClientProvider.
+type MockRestyClientProviderMockRecorder struct {
+	mock *MockRestyClientProvider
+}
+
+// NewMockRestyClientProvider creates a new mock instance.
+func NewMockRestyClientProvider(ctrl *gomock.Controller) *MockRestyClientProvider {
+	mock := &MockRestyClientProvider{ctrl: ctrl}
+	mock.recorder = &MockRestyClientProviderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockRestyClientProvider) EXPECT() *MockRestyClientProviderMockRecorder {
+	return m.recorder
+}
+
+// GetRestyClient mocks base method.
+func (m *MockRestyClientProvider) GetRestyClient(api string) (*resty.Client, bool) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRestyClient", api)
+	ret0, _ := ret[0].(*resty.Client)
+	ret1, _ := ret[1].(bool)
+	return ret0, ret1
+}
+
+// GetRestyClient indicates an expected call of GetRestyClient.
+func (mr *MockRestyClientProviderMockRecorder) GetRestyClient(api interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRestyClient", reflect.TypeOf((*MockRestyClientProvider)(nil).GetRestyClient), api)
 }

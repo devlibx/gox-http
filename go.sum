@@ -20,8 +20,8 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/devlibx/gox-base v0.0.139 h1:TFuJ90EdGkcp2+KIL1nsyJ5mfVq2KN4nmh0QMqruWu4=
-github.com/devlibx/gox-base v0.0.139/go.mod h1:EX+AwSE8cTal/IlHwCNeNJa7CVfMWl12OlmlGwMwvgQ=
+github.com/devlibx/gox-base v0.0.140 h1:jMnYJIfL8jxJsUSZM/Ljr71ePx66Z/QYAYrN3NCa3Ck=
+github.com/devlibx/gox-base v0.0.140/go.mod h1:EX+AwSE8cTal/IlHwCNeNJa7CVfMWl12OlmlGwMwvgQ=
 github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f/go.mod h1:cuUVRXasLTGF7a8hSLbxyZXjz+1KgoB3wDUb6vlszIc=
 github.com/fatih/structs v1.1.0 h1:Q7juDM0QtcnhCpeyLGQKyg4TOIghuNXrkL32pHAUMxo=
 github.com/fatih/structs v1.1.0/go.mod h1:9NiDSp5zOcgEDl+j00MP/WkGVPOlPRLejGD8Ga6PJ7M=
