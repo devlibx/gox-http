@@ -159,6 +159,73 @@ apis:
     retry_count: 3
     retry_initial_wait_time_ms: 10
 ```
+
+#### Test case support - Mocking a api
+If you want to mock an API, then you can do the following. In this example, we are adding a hook and 
+using an httptest server to return mock data. Using this, the tests are actually calling a full HTTP 
+API over the network (localhost server running using httptest).
+```go
+// Set up a mock server to give response
+// This will give dummy response
+httpTestServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	_, _ = fmt.Fprintln(w, `{"status": "ok"}`)
+}))
+defer httpTestServer.Close()
+
+// Test goxHttpCtx as a resty client provider
+onBeforeRequestCalled := false
+ok := SetupOnBeforeRequestOverRestyClientFromGoxHttpCtx(
+	s.goxHttpCtx,
+	"getJsonPlaceholderPosts",
+	func(client *resty.Client, request *resty.Request) error {
+		onBeforeRequestCalled = true
+		request.URL = httpTestServer.URL   // Here we hijacked the resty actual call, and will force it to call test http server
+		return nil
+	})
+assert.True(t, ok)
+
+// Make a call to getPosts - this should trigger OnBeforeRequest
+resp, err := s.goxHttpCtx.Execute(context.Background(), command.NewGoxRequestBuilder("getJsonPlaceholderPosts").WithPathParam("id", "1").Build())
+assert.NoError(t, err)
+assert.NotNil(t, resp)
+assert.Equal(t, http.StatusOK, resp.StatusCode)
+respMap := gox.StringObjectMapFromJsonOrEmpty(string(resp.Body))
+assert.Equal(t, "ok", respMap.StringOrEmpty("status"))
+assert.True(t, onBeforeRequestCalled)
+```
+
+One more way is to get access to the resty client to also hook other methods, e.g., restyClient.OnError(). It is the same; 
+the only difference is here we get the restyClient, which is a Resty client. In the above example, we used a convenience method.
+```go
+// Set up a mock server to give response
+httpTestServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	_, _ = fmt.Fprintln(w, `{"status": "ok"}`)
+}))
+defer httpTestServer.Close()
+
+// Test goxHttpCtx as a resty client provider
+onBeforeRequestCalled := false
+if rc, ok := GetRestyClientFromGoxHttpCtx(s.goxHttpCtx, "getJsonPlaceholderPosts"); ok {
+	rc.OnBeforeRequest(func(client *resty.Client, request *resty.Request) error {
+		onBeforeRequestCalled = true
+		request.URL = httpTestServer.URL
+		return nil
+	})
+}
+
+// Make a call to getPosts - this should trigger OnBeforeRequest
+resp, err := s.goxHttpCtx.Execute(context.Background(), command.NewGoxRequestBuilder("getJsonPlaceholderPosts").WithPathParam("id", "1").Build())
+assert.NoError(t, err)
+assert.NotNil(t, resp)
+assert.Equal(t, http.StatusOK, resp.StatusCode)
+respMap := gox.StringObjectMapFromJsonOrEmpty(string(resp.Body))
+assert.Equal(t, "ok", respMap.StringOrEmpty("status"))
+assert.True(t, onBeforeRequestCalled)
+```
+
+
 ----
 ## Environment Specific Configs Support
 You can setup all properties with env specific values
