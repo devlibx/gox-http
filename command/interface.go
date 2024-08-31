@@ -147,7 +147,6 @@ func (r *GoxResponse) String() string {
 
 type Command interface {
 	Execute(ctx context.Context, request *GoxRequest) (*GoxResponse, error)
-	ExecuteAsync(ctx context.Context, request *GoxRequest) chan *GoxResponse
 }
 
 func (req *GoxRequest) String() string {

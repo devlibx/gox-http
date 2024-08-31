@@ -125,17 +125,3 @@ func (mr *MockCommandMockRecorder) Execute(ctx, request interface{}) *gomock.Cal
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockCommand)(nil).Execute), ctx, request)
 }
-
-// ExecuteAsync mocks base method.
-func (m *MockCommand) ExecuteAsync(ctx context.Context, request *command.GoxRequest) chan *command.GoxResponse {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExecuteAsync", ctx, request)
-	ret0, _ := ret[0].(chan *command.GoxResponse)
-	return ret0
-}
-
-// ExecuteAsync indicates an expected call of ExecuteAsync.
-func (mr *MockCommandMockRecorder) ExecuteAsync(ctx, request interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteAsync", reflect.TypeOf((*MockCommand)(nil).ExecuteAsync), ctx, request)
-}

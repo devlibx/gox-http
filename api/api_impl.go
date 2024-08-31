@@ -44,10 +44,6 @@ func (g *goxHttpContextImpl) Execute(ctx context.Context, request *command.GoxRe
 	}
 }
 
-func (g *goxHttpContextImpl) ExecuteAsync(ctx context.Context, api string, request *command.GoxRequest) chan *command.GoxResponse {
-	panic("implement me")
-}
-
 // Internal setup method
 func (g *goxHttpContextImpl) setup() error {
 	g.config.SetupDefaults()
