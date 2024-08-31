@@ -105,6 +105,38 @@ func (s *RestyProviderTestSuite) TestRestyProvider_WithMockServer() {
 	assert.True(t, onBeforeRequestCalled)
 }
 
+func (s *RestyProviderTestSuite) TestRestyProvider_WithMockServer_SetupOnBeforeRequestOverRestyClientFromGoxHttpCtx() {
+	t := s.T()
+
+	// Set up a mock server to give response
+	httpTestServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprintln(w, `{"status": "ok"}`)
+	}))
+	defer httpTestServer.Close()
+
+	// Test goxHttpCtx as a resty client provider
+	onBeforeRequestCalled := false
+	ok := SetupOnBeforeRequestOverRestyClientFromGoxHttpCtx(
+		s.goxHttpCtx,
+		"getJsonPlaceholderPosts",
+		func(client *resty.Client, request *resty.Request) error {
+			onBeforeRequestCalled = true
+			request.URL = httpTestServer.URL
+			return nil
+		})
+	assert.True(t, ok)
+
+	// Make a call to getPosts - this should trigger OnBeforeRequest
+	resp, err := s.goxHttpCtx.Execute(context.Background(), command.NewGoxRequestBuilder("getJsonPlaceholderPosts").WithPathParam("id", "1").Build())
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	respMap := gox.StringObjectMapFromJsonOrEmpty(string(resp.Body))
+	assert.Equal(t, "ok", respMap.StringOrEmpty("status"))
+	assert.True(t, onBeforeRequestCalled)
+}
+
 func (s *RestyProviderTestSuite) TestRestyProvider_WithError() {
 	t := s.T()
 
