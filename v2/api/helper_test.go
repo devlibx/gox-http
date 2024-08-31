@@ -27,8 +27,20 @@ servers:
   testServer:
     host: localhost
     port: 9123
+  jsonplaceholder:
+    host: jsonplaceholder.typicode.com
+    port: 443
+    https: true
+    connect_timeout: 1000
+    connection_request_timeout: 1000
 
 apis:
+  getJsonPlaceholderPosts:
+    method: GET
+    path: /posts/{id}
+    server: jsonplaceholder
+    timeout: 1000
+    acceptable_codes: 200,201
   getPosts:
     method: GET
     path: /posts/{id}

@@ -9,6 +9,7 @@ import (
 	"github.com/devlibx/gox-base"
 	goxError "github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-http/v2/command"
+	"github.com/go-resty/resty/v2"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 	"net/http"
@@ -25,6 +26,17 @@ type HttpHystrixCommand struct {
 
 	serverName string
 	apiName    string
+}
+
+// GetRestyClient method will return underlying resty client if it uses it
+// Returns:
+// - resty client if this command is implemented using resty client under the hood
+// - bool - true if resty client is returned otherwise false
+func (h *HttpHystrixCommand) GetRestyClient() (*resty.Client, bool) {
+	if c, ok := h.command.(*HttpCommand); ok {
+		return c.GetRestyClient()
+	}
+	return nil, false
 }
 
 func (h *HttpHystrixCommand) UpdateCommand(command command.Command) {
