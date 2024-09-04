@@ -20,15 +20,16 @@ type Servers map[string]*Server
 // If you change anything here (add/update/delete) you must make changes in UnmarshalYAML()
 // ****************************************************************************************
 type Server struct {
-	Name                     string
-	Host                     string                 `yaml:"host"`
-	Port                     int                    `yaml:"port"`
-	Https                    bool                   `yaml:"https"`
-	ConnectTimeout           int                    `yaml:"connect_timeout"`
-	ConnectionRequestTimeout int                    `yaml:"connection_request_timeout"`
-	Properties               map[string]interface{} `yaml:"properties"`
-	Headers                  map[string]interface{} `yaml:"headers"`
-	InterceptorConfig        *interceptor.Config    `yaml:"interceptor_config"`
+	Name                        string
+	Host                        string                 `yaml:"host"`
+	Port                        int                    `yaml:"port"`
+	Https                       bool                   `yaml:"https"`
+	ConnectTimeout              int                    `yaml:"connect_timeout"`
+	ConnectionRequestTimeout    int                    `yaml:"connection_request_timeout"`
+	Properties                  map[string]interface{} `yaml:"properties"`
+	Headers                     map[string]interface{} `yaml:"headers"`
+	InterceptorConfig           *interceptor.Config    `yaml:"interceptor_config"`
+	EnableHttpConnectionTracing bool                   `yaml:"enable_http_connection_tracing"`
 }
 
 // List of all APIs
@@ -54,6 +55,7 @@ type Api struct {
 	Headers                      map[string]string   `yaml:"headers"`
 	InterceptorConfig            *interceptor.Config `yaml:"interceptor_config"`
 	EnableRequestResponseLogging bool                `yaml:"enable_request_response_logging"`
+	EnableHttpConnectionTracing  bool                `yaml:"enable_http_connection_tracing"`
 	acceptableCodes              []int
 	DisableHystrix               bool
 }

@@ -9,12 +9,12 @@ import (
 	"github.com/devlibx/gox-http/v4/command"
 	"github.com/devlibx/gox-http/v4/interceptor"
 	"github.com/go-resty/resty/v2"
-	_ "github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 	"net"
 	"net/http"
+	"net/http/httptrace"
 	"strings"
 	"sync"
 	"time"
@@ -33,6 +33,8 @@ var DefaultStartSpanFromContextFunc StartSpanFromContext = func(ctx context.Cont
 	return opentracing.StartSpanFromContext(ctx, operationName, opts...)
 }
 
+var DefaultHttpTrackingFunc = func() {}
+
 var ContextBasedHeaderPrefix = "__request_scope_headers__"
 
 type HttpCommand struct {
@@ -43,6 +45,8 @@ type HttpCommand struct {
 	debugLogger      *zap.SugaredLogger
 	client           *resty.Client
 	setRetryFuncOnce *sync.Once
+
+	deepCopyOfApi *command.Api
 }
 
 // GetRestyClient method will return underlying resty client if it uses it
@@ -123,6 +127,9 @@ func (h *HttpCommand) internalExecute(ctx context.Context, request *command.GoxR
 	if !EnableRequestResponseBodyLogging {
 		h.debugLogger.Debug("got request to execute", zap.Stringer("request", request), zap.String("url", finalUrlToRequest))
 	}
+
+	// Track http connection if enabled
+	h.trackHttp(request, r)
 
 	start := time.Now()
 	switch strings.ToUpper(h.api.Method) {
@@ -297,6 +304,67 @@ func (h *HttpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 
 	return h.intercept(ctx, r)
 }
+
+func (h *HttpCommand) trackHttp(request *command.GoxRequest, r *resty.Request) {
+
+	// If it is disabled in server and api level then do not track it
+	if h.api.EnableHttpConnectionTracing == false && h.server.EnableHttpConnectionTracing == false {
+		return
+	}
+
+	// Setup tracking object
+	httpTracking := HttpCallTracking{
+		StartTimeOfHttpCall: time.Now(),
+		Events:              make([]HttpCallTrackingEvents, 0),
+	}
+
+	// Function to log event
+	logHttpTrackingEventFunction := func(name string) {
+		now := time.Now()
+		httpTracking.Events = append(httpTracking.Events, HttpCallTrackingEvents{
+			Name:                                  name,
+			Time:                                  now,
+			DurationFromStartOfHttpCallToThisStep: now.Sub(httpTracking.StartTimeOfHttpCall),
+		})
+	}
+
+	// Tracker to capture different events at each stage
+	trace := &httptrace.ClientTrace{
+		DNSStart: func(info httptrace.DNSStartInfo) {
+			logHttpTrackingEventFunction("DnsStart")
+		},
+		DNSDone: func(info httptrace.DNSDoneInfo) {
+			logHttpTrackingEventFunction("DnsDone")
+		},
+		ConnectStart: func(network, addr string) {
+			logHttpTrackingEventFunction("ConnectStart")
+		},
+		ConnectDone: func(network, addr string, err error) {
+			logHttpTrackingEventFunction("ConnectDone")
+		},
+		GotConn: func(info httptrace.GotConnInfo) {
+			logHttpTrackingEventFunction("GotConn")
+		},
+		GetConn: func(hostPort string) {
+			logHttpTrackingEventFunction("GetConn")
+		},
+		WroteHeaders: func() {
+			logHttpTrackingEventFunction("WroteHeaders")
+		},
+		WroteRequest: func(info httptrace.WroteRequestInfo) {
+			logHttpTrackingEventFunction("WroteRequest")
+		},
+		GotFirstResponseByte: func() {
+			logHttpTrackingEventFunction("GotFirstResponseByte")
+
+			if HttpTrackingFuncSingleton != nil {
+				HttpTrackingFuncSingleton(request, r, r.URL, httpTracking)
+			}
+		},
+	}
+	r.SetContext(httptrace.WithClientTrace(r.Context(), trace))
+}
+
 func (h *HttpCommand) intercept(ctx context.Context, r *resty.Request) (*resty.Request, error) {
 
 	// Get the valid config from server and api

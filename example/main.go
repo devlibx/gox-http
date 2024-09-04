@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/devlibx/gox-base/v2"
 	"github.com/devlibx/gox-base/v2/serialization"
 	goxHttpApi "github.com/devlibx/gox-http/v4/api"
 	"github.com/devlibx/gox-http/v4/command"
+	httpCommand "github.com/devlibx/gox-http/v4/command/http"
+	"github.com/go-resty/resty/v2"
 	"log/slog"
 )
 
@@ -27,9 +30,15 @@ apis:
     server: jsonplaceholder
     timeout: 1000
     acceptable_codes: 200,201
+    enable_http_connection_tracing: true
 `
 
 func main() {
+
+	// This will do full tracking of http connection
+	httpCommand.HttpTrackingFuncSingleton = func(request *command.GoxRequest, r *resty.Request, fullPath string, tracingEvent httpCommand.HttpCallTracking) {
+		fmt.Println(tracingEvent.String())
+	}
 
 	// Read config and
 	config := command.Config{}
