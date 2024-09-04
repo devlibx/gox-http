@@ -24,11 +24,18 @@ func (h *HttpCallTracking) String() string {
 	sort.Slice(h.Events, func(i, j int) bool {
 		return h.Events[i].Time.Before(h.Events[j].Time)
 	})
-	var sb strings.Builder
+
+	parts := make([]string, 0)
 	for _, e := range h.Events {
-		sb.WriteString(fmt.Sprintf("%s: %v (at %v) => ", e.Name, e.DurationFromStartOfHttpCallToThisStep, e.Time.Format("15:04:05.000")))
+		parts = append(
+			parts,
+			fmt.Sprintf("%s: %v (at %v)", e.Name, e.DurationFromStartOfHttpCallToThisStep, e.Time.Format("15:04:05.000")),
+		)
 	}
-	return sb.String()
+	if len(parts) > 0 {
+		return strings.Join(parts, " => ")
+	}
+	return ""
 }
 
 // HttpTrackingFunc is a callback to get the tracing info to log
