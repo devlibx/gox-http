@@ -37,6 +37,7 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			var _https = serialization.ParameterizedValue(valueMap.StringOrDefault("https", "false"))
 			var _port = serialization.ParameterizedValue(valueMap.StringOrDefault("port", "80"))
 			var _connectTimeout = serialization.ParameterizedValue(valueMap.StringOrDefault("connect_timeout", "50"))
+			var _enableHttpConnectionTracing = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_http_connection_tracing", "false"))
 			var connectionRequestTimeout = serialization.ParameterizedValue(valueMap.StringOrDefault("connection_request_timeout", "50"))
 
 			if s.Host, err = _host.GetString(e.Env); err != nil {
@@ -70,6 +71,9 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 					return err
 				}
 			}
+			if s.EnableHttpConnectionTracing, err = _enableHttpConnectionTracing.GetBool(e.Env); err != nil {
+				return errors.Wrap(err, "error is parsing enable_http_connection_tracing property for server=%s", name)
+			}
 		}
 	}
 
@@ -95,6 +99,7 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			var retry_count = serialization.ParameterizedValue(valueMap.StringOrDefault("retry_count", "0"))
 			var retry_initial_wait_time_ms = serialization.ParameterizedValue(valueMap.StringOrDefault("retry_initial_wait_time_ms", "1"))
 			var enable_request_response = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_request_response_logging", "false"))
+			var _enableHttpConnectionTracing = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_http_connection_tracing", "false"))
 
 			if a.Path, err = path.GetString(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing path property for api=%s", name)
@@ -131,6 +136,9 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			}
 			if a.EnableRequestResponseLogging, err = enable_request_response.GetBool(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing enable_request_response_logging property for api=%s", name)
+			}
+			if a.EnableHttpConnectionTracing, err = _enableHttpConnectionTracing.GetBool(e.Env); err != nil {
+				return errors.Wrap(err, "error is parsing async property for api=%s", name)
 			}
 		}
 	}

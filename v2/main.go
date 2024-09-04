@@ -37,6 +37,7 @@ apis:
     server: jsonplaceholder
     timeout: 1000
     acceptable_codes: 200,201
+    enable_http_connection_tracing: true
   delay_timeout_10:
     path: /delay
     server: testServer
@@ -50,6 +51,10 @@ apis:
 `
 
 func main() {
+	httpCommand.HttpTrackingFuncSingleton = func(request *command.GoxRequest, r *resty.Request, fullPath string, tracingEvent httpCommand.HttpCallTracking) {
+		fmt.Println(tracingEvent.String())
+	}
+
 	httpCommand.EnableTimeTakenByHttpCall = true
 	// run perf test
 	if true {
