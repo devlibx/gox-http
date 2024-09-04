@@ -2,6 +2,7 @@ package httpCommand
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"github.com/devlibx/gox-base/v2"
 	"github.com/devlibx/gox-base/v2/errors"
@@ -353,6 +354,15 @@ func (h *HttpCommand) trackHttp(request *command.GoxRequest, r *resty.Request) {
 		},
 		WroteRequest: func(info httptrace.WroteRequestInfo) {
 			logHttpTrackingEventFunction("WroteRequest")
+		},
+		TLSHandshakeStart: func() {
+			logHttpTrackingEventFunction("TLSHandshakeStart")
+		},
+		TLSHandshakeDone: func(state tls.ConnectionState, err error) {
+			logHttpTrackingEventFunction("TLSHandshakeStart")
+		},
+		PutIdleConn: func(err error) {
+			logHttpTrackingEventFunction("PutIdleConn")
 		},
 		GotFirstResponseByte: func() {
 			logHttpTrackingEventFunction("GotFirstResponseByte")
