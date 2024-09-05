@@ -2,7 +2,6 @@ package httpCommand
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"github.com/devlibx/gox-base/v2"
 	"github.com/devlibx/gox-base/v2/errors"
@@ -13,9 +12,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
+	"log/slog"
 	"net"
 	"net/http"
-	"net/http/httptrace"
 	"strings"
 	"sync"
 	"time"
@@ -130,7 +129,8 @@ func (h *HttpCommand) internalExecute(ctx context.Context, request *command.GoxR
 	}
 
 	// Track http connection if enabled
-	h.trackHttp(request, r)
+	ht := HttpCallTracking{}
+	ht.trackHttp(request, r, h.api, h.server)
 
 	start := time.Now()
 	switch strings.ToUpper(h.api.Method) {
@@ -146,8 +146,9 @@ func (h *HttpCommand) internalExecute(ctx context.Context, request *command.GoxR
 		response, err = r.Patch(finalUrlToRequest)
 	}
 	end := time.Now()
+
+	urlToPrint := finalUrlToRequest
 	if EnableTimeTakenByHttpCall {
-		urlToPrint := finalUrlToRequest
 		if response != nil && response.Request != nil && response.Request.URL != "" {
 			urlToPrint = response.Request.URL
 		}
@@ -162,12 +163,29 @@ func (h *HttpCommand) internalExecute(ctx context.Context, request *command.GoxR
 		}
 	}
 
+	// Send tracking event to be processed
+	defer func() {
+		h.publishTracking(request, r, finalUrlToRequest, ht)
+	}()
+
 	if err != nil {
 		responseObject := h.handleError(err)
 		return responseObject, responseObject.Err
 	} else {
 		responseObject := h.processResponse(request, response)
 		return responseObject, responseObject.Err
+	}
+}
+
+func (h *HttpCommand) publishTracking(request *command.GoxRequest, r *resty.Request, fullPath string, tracingEvent HttpCallTracking) {
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Error("publishTracking Recovered from panic: %v", r)
+		}
+	}()
+
+	if HttpTrackingFuncSingleton != nil {
+		HttpTrackingFuncSingleton(request, r, fullPath, tracingEvent)
 	}
 }
 
@@ -304,75 +322,6 @@ func (h *HttpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 	}
 
 	return h.intercept(ctx, r)
-}
-
-func (h *HttpCommand) trackHttp(request *command.GoxRequest, r *resty.Request) {
-
-	// If it is disabled in server and api level then do not track it
-	if h.api.EnableHttpConnectionTracing == false && h.server.EnableHttpConnectionTracing == false {
-		return
-	}
-
-	// Setup tracking object
-	httpTracking := HttpCallTracking{
-		StartTimeOfHttpCall: time.Now(),
-		Events:              make([]HttpCallTrackingEvents, 0),
-	}
-
-	// Function to log event
-	logHttpTrackingEventFunction := func(name string) {
-		now := time.Now()
-		httpTracking.Events = append(httpTracking.Events, HttpCallTrackingEvents{
-			Name:                                  name,
-			Time:                                  now,
-			DurationFromStartOfHttpCallToThisStep: now.Sub(httpTracking.StartTimeOfHttpCall),
-		})
-	}
-
-	// Tracker to capture different events at each stage
-	trace := &httptrace.ClientTrace{
-		DNSStart: func(info httptrace.DNSStartInfo) {
-			logHttpTrackingEventFunction("DnsStart")
-		},
-		DNSDone: func(info httptrace.DNSDoneInfo) {
-			logHttpTrackingEventFunction("DnsDone")
-		},
-		ConnectStart: func(network, addr string) {
-			logHttpTrackingEventFunction("ConnectStart")
-		},
-		ConnectDone: func(network, addr string, err error) {
-			logHttpTrackingEventFunction("ConnectDone")
-		},
-		GotConn: func(info httptrace.GotConnInfo) {
-			logHttpTrackingEventFunction("GotConn")
-		},
-		GetConn: func(hostPort string) {
-			logHttpTrackingEventFunction("GetConn")
-		},
-		WroteHeaders: func() {
-			logHttpTrackingEventFunction("WroteHeaders")
-		},
-		WroteRequest: func(info httptrace.WroteRequestInfo) {
-			logHttpTrackingEventFunction("WroteRequest")
-		},
-		TLSHandshakeStart: func() {
-			logHttpTrackingEventFunction("TLSHandshakeStart")
-		},
-		TLSHandshakeDone: func(state tls.ConnectionState, err error) {
-			logHttpTrackingEventFunction("TLSHandshakeStart")
-		},
-		PutIdleConn: func(err error) {
-			logHttpTrackingEventFunction("PutIdleConn")
-		},
-		GotFirstResponseByte: func() {
-			logHttpTrackingEventFunction("GotFirstResponseByte")
-
-			if HttpTrackingFuncSingleton != nil {
-				HttpTrackingFuncSingleton(request, r, r.URL, httpTracking)
-			}
-		},
-	}
-	r.SetContext(httptrace.WithClientTrace(r.Context(), trace))
 }
 
 func (h *HttpCommand) intercept(ctx context.Context, r *resty.Request) (*resty.Request, error) {
