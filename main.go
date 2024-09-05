@@ -26,6 +26,7 @@ servers:
     https: true
     connect_timeout: 1000
     connection_request_timeout: 1000
+    enable_tls_logging: true
   testServer:
     host: localhost
     port: 9123

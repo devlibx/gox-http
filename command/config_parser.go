@@ -38,6 +38,7 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			var _port = serialization.ParameterizedValue(valueMap.StringOrDefault("port", "80"))
 			var _connectTimeout = serialization.ParameterizedValue(valueMap.StringOrDefault("connect_timeout", "50"))
 			var _enableHttpConnectionTracing = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_http_connection_tracing", "false"))
+			var _enableTlsLogging = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_tls_logging", "false"))
 			var connectionRequestTimeout = serialization.ParameterizedValue(valueMap.StringOrDefault("connection_request_timeout", "50"))
 
 			if s.Host, err = _host.GetString(e.Env); err != nil {
@@ -74,6 +75,9 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			if s.EnableHttpConnectionTracing, err = _enableHttpConnectionTracing.GetBool(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing enable_http_connection_tracing property for server=%s", name)
 			}
+			if s.EnableTlsLogging, err = _enableTlsLogging.GetBool(e.Env); err != nil {
+				return errors.Wrap(err, "error is parsing enable_tls_logging property for server=%s", name)
+			}
 		}
 	}
 
@@ -99,6 +103,7 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			var retry_count = serialization.ParameterizedValue(valueMap.StringOrDefault("retry_count", "0"))
 			var retry_initial_wait_time_ms = serialization.ParameterizedValue(valueMap.StringOrDefault("retry_initial_wait_time_ms", "1"))
 			var enable_request_response = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_request_response_logging", "false"))
+			var _enableTlsLogging = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_tls_logging", "false"))
 			var _enableHttpConnectionTracing = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_http_connection_tracing", "false"))
 
 			if a.Path, err = path.GetString(e.Env); err != nil {
@@ -139,6 +144,9 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			}
 			if a.EnableHttpConnectionTracing, err = _enableHttpConnectionTracing.GetBool(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing async property for api=%s", name)
+			}
+			if a.EnableTlsLogging, err = _enableTlsLogging.GetBool(e.Env); err != nil {
+				return errors.Wrap(err, "error is parsing enable_tls_logging property for server=%s", name)
 			}
 		}
 	}

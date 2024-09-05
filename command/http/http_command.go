@@ -2,6 +2,7 @@ package httpCommand
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"github.com/devlibx/gox-base/v2"
 	"github.com/devlibx/gox-base/v2/errors"
@@ -15,6 +16,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -462,6 +464,7 @@ func (h *HttpCommand) handleError(err error) *command.GoxResponse {
 }
 
 func NewHttpCommand(cf gox.CrossFunction, server *command.Server, api *command.Api) (command.Command, error) {
+
 	c := &HttpCommand{
 		CrossFunction:    cf,
 		server:           server,
@@ -479,5 +482,31 @@ func NewHttpCommand(cf gox.CrossFunction, server *command.Server, api *command.A
 		c.client.SetDebug(true)
 	}
 
+	// Enable Tls Logging to debug using wireshark
+	if server.EnableTlsLogging || api.EnableTlsLogging {
+		if file, err := os.Create("/tmp/tls_logging_" + server.Name + "_" + api.Name + ".log"); err == nil {
+			if transport, ok := c.client.GetClient().Transport.(*http.Transport); ok {
+				if transport.TLSClientConfig != nil {
+					transport.TLSClientConfig.KeyLogWriter = &apiTlsKeyLogWriter{file: file}
+				} else {
+					transport.TLSClientConfig = &tls.Config{
+						KeyLogWriter: &apiTlsKeyLogWriter{file: file},
+					}
+				}
+			}
+		} else {
+			slog.Error("failed to create tls logging file: server=%s, api=%s", server.Name, api.Name)
+		}
+	}
+
 	return c, nil
+}
+
+// Custom Key Log Writer to capture keying material
+type apiTlsKeyLogWriter struct {
+	file *os.File
+}
+
+func (w *apiTlsKeyLogWriter) Write(p []byte) (n int, err error) {
+	return w.file.Write(p)
 }
