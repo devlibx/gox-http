@@ -30,7 +30,6 @@ type Server struct {
 	Headers                     map[string]interface{} `yaml:"headers"`
 	InterceptorConfig           *interceptor.Config    `yaml:"interceptor_config"`
 	EnableHttpConnectionTracing bool                   `yaml:"enable_http_connection_tracing"`
-	EnableTlsLogging            bool                   `yaml:"enable_tls_logging"`
 }
 
 // List of all APIs
@@ -57,7 +56,6 @@ type Api struct {
 	InterceptorConfig            *interceptor.Config `yaml:"interceptor_config"`
 	EnableRequestResponseLogging bool                `yaml:"enable_request_response_logging"`
 	EnableHttpConnectionTracing  bool                `yaml:"enable_http_connection_tracing"`
-	EnableTlsLogging             bool                `yaml:"enable_tls_logging"`
 	acceptableCodes              []int
 	DisableHystrix               bool
 }
