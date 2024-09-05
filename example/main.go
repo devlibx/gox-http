@@ -10,6 +10,7 @@ import (
 	httpCommand "github.com/devlibx/gox-http/v4/command/http"
 	"github.com/go-resty/resty/v2"
 	"log/slog"
+	"time"
 )
 
 // Here you can define your own configuration
@@ -22,6 +23,7 @@ servers:
     https: true
     connect_timeout: 1000
     connection_request_timeout: 1000
+    enable_tls_logging: true
   
 apis: 
   getPosts:
@@ -55,35 +57,39 @@ func main() {
 		return
 	}
 
-	// Execute HTTP request
-	//
-	// successResponse - this will contain the response [of type successPojo] on successfully call
-	//
-	// err - this will contain the error if there is any error while calling the api
-	//       Also if you have some payload in error then you can pass "errorPojo" to get it.
-	//       otherwise pass any
-	if successResponse, err := goxHttpApi.ExecuteHttp[successPojo, errorPojo](
-		context.Background(),
-		goxHttpCtx,
-		command.NewGoxRequestBuilder("getPosts").
-			WithContentTypeJson().
-			WithPathParam("id", 1).
-			Build(),
-	); err != nil {
-
-		// If you expect some error body in case api returns error then you can get it from
-		// error itself = actually this is just a wrapper of errors.As(err, out) method
+	for {
+		// Execute HTTP request
 		//
-		// errorResponsePayloadExists = true if there is some error payload
-		// ok = true (we should never get ok = false if you passed the error returned from ExecuteHttp method)
-		errorResponse, errorResponsePayloadExists, ok := goxHttpApi.ExtractError[errorPojo](err)
-		_, _ = errorResponsePayloadExists, ok
+		// successResponse - this will contain the response [of type successPojo] on successfully call
+		//
+		// err - this will contain the error if there is any error while calling the api
+		//       Also if you have some payload in error then you can pass "errorPojo" to get it.
+		//       otherwise pass any
+		if successResponse, err := goxHttpApi.ExecuteHttp[successPojo, errorPojo](
+			context.Background(),
+			goxHttpCtx,
+			command.NewGoxRequestBuilder("getPosts").
+				WithContentTypeJson().
+				WithPathParam("id", 1).
+				Build(),
+		); err != nil {
 
-		slog.Error("[Failed to execute]", slog.Any("status", errorResponse.Response))
-	} else {
-		slog.Info("Got result", slog.Int("id", successResponse.Response.Id), slog.String("name", successResponse.Response.Name))
-		// Response
-		// 2024/05/27 01:32:13 INFO Got result id=1 name="sunt aut facere repellat provident occaecati excepturi optio reprehenderit"
+			// If you expect some error body in case api returns error then you can get it from
+			// error itself = actually this is just a wrapper of errors.As(err, out) method
+			//
+			// errorResponsePayloadExists = true if there is some error payload
+			// ok = true (we should never get ok = false if you passed the error returned from ExecuteHttp method)
+			errorResponse, errorResponsePayloadExists, ok := goxHttpApi.ExtractError[errorPojo](err)
+			_, _ = errorResponsePayloadExists, ok
+
+			slog.Error("[Failed to execute]", slog.Any("status", errorResponse.Response))
+		} else {
+			slog.Info("Got result", slog.Int("id", successResponse.Response.Id), slog.String("name", successResponse.Response.Name))
+			// Response
+			// 2024/05/27 01:32:13 INFO Got result id=1 name="sunt aut facere repellat provident occaecati excepturi optio reprehenderit"
+		}
+
+		time.Sleep(1 * time.Second)
 	}
 }
 
