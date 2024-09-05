@@ -484,7 +484,9 @@ func NewHttpCommand(cf gox.CrossFunction, server *command.Server, api *command.A
 
 	// Enable Tls Logging to debug using wireshark
 	if server.EnableTlsLogging || api.EnableTlsLogging {
-		if file, err := os.Create("/tmp/tls_logging_" + server.Name + "_" + api.Name + ".log"); err == nil {
+		t := time.Now().Format(time.TimeOnly)
+		t = strings.ReplaceAll(t, ":", "_")
+		if file, err := os.Create("/tmp/tls_logging_" + server.Name + "_" + api.Name + "_" + t + ".log"); err == nil {
 			if transport, ok := c.client.GetClient().Transport.(*http.Transport); ok {
 				if transport.TLSClientConfig != nil {
 					transport.TLSClientConfig.KeyLogWriter = &apiTlsKeyLogWriter{file: file}
