@@ -111,6 +111,8 @@ func processSuccess[SuccessResp any, ErrorResp any](resp *command.GoxResponse, i
 				StatusCode: resp.StatusCode,
 				Response:   successResp,
 			}, nil
+		} else {
+			err = serializationErr
 		}
 	} else {
 		var successResp SuccessResp
@@ -120,6 +122,8 @@ func processSuccess[SuccessResp any, ErrorResp any](resp *command.GoxResponse, i
 				StatusCode: resp.StatusCode,
 				Response:   successResp,
 			}, nil, nil
+		} else {
+			err = serializationErr
 		}
 	}
 
