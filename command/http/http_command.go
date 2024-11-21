@@ -2,6 +2,7 @@ package httpCommand
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"github.com/devlibx/gox-base/v2"
 	"github.com/devlibx/gox-base/v2/errors"
@@ -15,6 +16,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -462,12 +464,29 @@ func (h *HttpCommand) handleError(err error) *command.GoxResponse {
 }
 
 func NewHttpCommand(cf gox.CrossFunction, server *command.Server, api *command.Api) (command.Command, error) {
+
+	// We need to build a client and also consider if we need to use proxy or not
+	var client *resty.Client
+	if server.ProxyUrl == "" {
+		client = resty.New()
+	} else {
+		if proxyURL, err := url.Parse(server.ProxyUrl); err != nil {
+			return nil, errors.Wrap(err, "failed to parse proxy url: url=%s", server.ProxyUrl)
+		} else {
+			client = resty.New()
+			client.SetTransport(&http.Transport{Proxy: http.ProxyURL(proxyURL)})
+			if server.SkipCertVerify == "true" {
+				client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+			}
+		}
+	}
+
 	c := &HttpCommand{
 		CrossFunction:    cf,
 		server:           server,
 		api:              api,
 		logger:           cf.Logger().Named("goxHttp").Named(api.Name),
-		client:           resty.New(),
+		client:           client,
 		setRetryFuncOnce: &sync.Once{},
 	}
 	c.debugLogger = c.logger.Sugar()

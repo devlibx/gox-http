@@ -21,9 +21,11 @@ type Servers map[string]*Server
 // ****************************************************************************************
 type Server struct {
 	Name                        string
+	ProxyUrl                    string                 `yaml:"proxy_url"`
 	Host                        string                 `yaml:"host"`
 	Port                        int                    `yaml:"port"`
 	Https                       bool                   `yaml:"https"`
+	SkipCertVerify              string                 `yaml:"skip_cert_verify"`
 	ConnectTimeout              int                    `yaml:"connect_timeout"`
 	ConnectionRequestTimeout    int                    `yaml:"connection_request_timeout"`
 	Properties                  map[string]interface{} `yaml:"properties"`
