@@ -39,6 +39,8 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			var _connectTimeout = serialization.ParameterizedValue(valueMap.StringOrDefault("connect_timeout", "50"))
 			var _enableHttpConnectionTracing = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_http_connection_tracing", "false"))
 			var connectionRequestTimeout = serialization.ParameterizedValue(valueMap.StringOrDefault("connection_request_timeout", "50"))
+			var _skipCertVerify = serialization.ParameterizedValue(valueMap.StringOrDefault("skip_cert_verify", "false"))
+			var _ProxyUrl = serialization.ParameterizedValue(valueMap.StringOrDefault("proxy_url", ""))
 
 			if s.Host, err = _host.GetString(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing host property for server=%s", name)
@@ -73,6 +75,12 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			}
 			if s.EnableHttpConnectionTracing, err = _enableHttpConnectionTracing.GetBool(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing enable_http_connection_tracing property for server=%s", name)
+			}
+			if s.SkipCertVerify, err = _skipCertVerify.GetString(e.Env); err != nil {
+				return errors.Wrap(err, "error is parsing skip_cert_verify property for server=%s - it should be true/false", name)
+			}
+			if s.ProxyUrl, err = _ProxyUrl.GetString(e.Env); err != nil {
+				return errors.Wrap(err, "error is parsing proxy_url property for server=%s", name)
 			}
 		}
 	}
