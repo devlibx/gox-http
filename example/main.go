@@ -44,14 +44,14 @@ func main() {
 	config := command.Config{}
 	err := serialization.ReadYamlFromString(httpConfig, &config)
 	if err != nil {
-		slog.Error("got error in reading config", err)
+		slog.Error("got error in reading config", "error", err)
 		return
 	}
 
 	// Setup goHttp context
 	goxHttpCtx, err := goxHttpApi.NewGoxHttpContext(gox.NewCrossFunction(), &config)
 	if err != nil {
-		slog.Error("got error in creating gox http context config", err)
+		slog.Error("got error in creating gox http context config", "error", err)
 		return
 	}
 

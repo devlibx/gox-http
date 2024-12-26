@@ -108,7 +108,7 @@ func (s *helperTestSuite) SetupSuite() {
 	config := command.Config{}
 	err := serialization.ReadYamlFromString(httpConfig, &config)
 	if err != nil {
-		slog.Error("got error in reading config", err)
+		slog.Error("got error in reading config", "error", err)
 		return
 	}
 

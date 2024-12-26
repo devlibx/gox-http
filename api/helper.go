@@ -139,7 +139,17 @@ func processError[SuccessResp any, ErrorResp any](err error, resp *command.GoxRe
 	var goxError *command.GoxHttpError
 	if errors.As(err, &goxError) || (resp != nil && resp.Body != nil && len(resp.Body) > 0) {
 		var errorResp ErrorResp
-		if serializationErr := serialization.JsonBytesToObject(resp.Body, &errorResp); serializationErr == nil {
+		if resp == nil || resp.Body == nil || len(resp.Body) == 0 {
+			code := http.StatusInternalServerError
+			if resp != nil {
+				code = resp.StatusCode
+			}
+			return nil, nil, &GoxError[ErrorResp]{
+				Body:       nil,
+				StatusCode: code,
+				Err:        err,
+			}
+		} else if serializationErr := serialization.JsonBytesToObject(resp.Body, &errorResp); serializationErr == nil {
 			return nil, nil, &GoxError[ErrorResp]{
 				Response:   errorResp,
 				Body:       resp.Body,
