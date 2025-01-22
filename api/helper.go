@@ -15,7 +15,7 @@ var GoxHttpRequestResponseLoggingEnabled = slog.LevelDebug
 
 // GoxSuccessResponse is the typed response after successful http call and parsing response to success object
 type GoxSuccessResponse[SuccessResp any] struct {
-	Body       []byte
+	Body       []byte `json:"-"`
 	Response   SuccessResp
 	StatusCode int
 }
