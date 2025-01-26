@@ -1,0 +1,15 @@
+servers:
+  jsonplaceholder:
+    host: localhost
+    port: 8018
+    https: false
+    connect_timeout: 1000
+    connection_request_timeout: 1000
+    properties:
+      mdc: x-request-id,x-user-id
+apis:
+  example:
+    method: POST
+    path: /example
+    server: jsonplaceholder
+    timeout: 1000

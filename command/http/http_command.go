@@ -243,6 +243,21 @@ func (h *HttpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 		}
 	}
 
+	// Add MDC which
+	if h.server.Properties != nil {
+		if _mdc, ok := h.server.Properties["mdc"]; ok {
+			if mdc, ok := _mdc.(string); ok {
+				for _, k := range strings.Split(mdc, ",") {
+					if v := ctx.Value(k); v != nil {
+						if s, ok := v.(string); ok {
+							r.SetHeader(k, s)
+						}
+					}
+				}
+			}
+		}
+	}
+
 	// Set default headers
 	if h.api.Headers != nil {
 		for name, value := range h.api.Headers {
