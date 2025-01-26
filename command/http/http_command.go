@@ -228,21 +228,6 @@ func (h *HttpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 	tracer := opentracing.GlobalTracer()
 	_ = tracer.Inject(sp.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
 
-	// Set headers from service
-	if h.server.Headers != nil {
-		for name, value := range h.server.Headers {
-			if name == "__UNIQUE_UUID__" {
-				r.SetHeader(name, uuid.New().String())
-			} else {
-				if s, ok := value.(string); ok {
-					r.SetHeader(name, s)
-				} else {
-					r.SetHeader(name, serialization.StringifyOrEmptyJsonOnError(value))
-				}
-			}
-		}
-	}
-
 	// Add MDC which
 	if h.server.Properties != nil {
 		if _mdc, ok := h.server.Properties["mdc"]; ok {
@@ -253,6 +238,21 @@ func (h *HttpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 							r.SetHeader(k, s)
 						}
 					}
+				}
+			}
+		}
+	}
+
+	// Set headers from service
+	if h.server.Headers != nil {
+		for name, value := range h.server.Headers {
+			if name == "__UNIQUE_UUID__" {
+				r.SetHeader(name, uuid.New().String())
+			} else {
+				if s, ok := value.(string); ok {
+					r.SetHeader(name, s)
+				} else {
+					r.SetHeader(name, serialization.StringifyOrEmptyJsonOnError(value))
 				}
 			}
 		}
