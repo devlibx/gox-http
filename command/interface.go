@@ -3,10 +3,13 @@ package command
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strconv"
+
 	"github.com/devlibx/gox-base/v2"
 	"github.com/devlibx/gox-base/v2/serialization"
 	"github.com/devlibx/gox-http/v4/interceptor"
-	"net/http"
 )
 
 //go:generate mockgen -source=interface.go -destination=../mocks/command/mock_interface.go -package=mockGoxHttp
@@ -155,4 +158,46 @@ type Command interface {
 
 func (req *GoxRequest) String() string {
 	return serialization.StringifySuppressError(req, "{}")
+}
+
+// UpdateServerWithUrl updates a server's configuration using a URL string. This method can be used when you have a URL
+// which you want to use for a server. It parses the URL and updates the server's host, port, and HTTPS settings.
+//
+// IMPORTANT: This method should only be used before the GoxHttpContext is initialized. Any changes made after
+// GoxHttpContext setup will not take effect. This method is primarily used in test scenarios where you need
+// to configure a server to point to a test HTTP server (e.g., httptest.Server).
+//
+// Example test usage:
+//
+//	server := httptest.NewServer(handler)
+//	defer server.Close()
+//	config.UpdateServerWithUrl("testServer", server.URL)
+//
+// Parameters:
+//   - serverName: The name of the server in the Config.Servers map to update
+//   - urlStr: A URL string in the format "scheme://host[:port][/path]" (e.g., "http://localhost:8080", "https://api.example.com:443")
+//
+// The method will:
+//   - Set the Host field to the hostname/IP from the URL (without port)
+//   - Set the Port field if a port is specified in the URL
+//   - Set the Https field to true if the URL scheme is "https", false otherwise
+//
+// If the URL is invalid or missing a scheme, the server configuration will remain unchanged.
+// If the server name doesn't exist in the configuration, no action is taken.
+func (c *Config) UpdateServerWithUrl(serverName, urlStr string) {
+	if server, ok := c.Servers[serverName]; ok {
+		u, err := url.Parse(urlStr)
+		if err == nil && u.Scheme != "" {
+			// Update host without the port
+			server.Host = u.Hostname()
+
+			// Update port if present
+			if port, err := strconv.Atoi(u.Port()); err == nil {
+				server.Port = port
+			}
+
+			// Update https based on scheme
+			server.Https = u.Scheme == "https"
+		}
+	}
 }
