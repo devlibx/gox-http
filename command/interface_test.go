@@ -27,6 +27,7 @@ func TestParseConfig(t *testing.T) {
 	assert.Equal(t, "jsonplaceholder", config.Apis["getPosts"].Server)
 	assert.Equal(t, 1000, config.Apis["getPosts"].Timeout)
 	assert.Equal(t, "200,201", config.Apis["getPosts"].AcceptableCodes)
+	assert.Equal(t, false, config.Apis["getPosts"].DisableHystrix)
 
 	assert.Equal(t, "GET", config.Apis["delay_timeout_5000"].Method)
 	assert.Equal(t, "/delay", config.Apis["delay_timeout_5000"].Path)
@@ -35,6 +36,7 @@ func TestParseConfig(t *testing.T) {
 	assert.Equal(t, "200,201", config.Apis["delay_timeout_5000"].AcceptableCodes)
 	assert.Equal(t, 3, config.Apis["delay_timeout_5000"].Concurrency)
 	assert.Equal(t, 10, config.Apis["delay_timeout_5000"].QueueSize)
+	assert.Equal(t, false, config.Apis["delay_timeout_5000"].DisableHystrix)
 
 	assert.Equal(t, "POST", config.Apis["post_api_with_delay_2000"].Method)
 	assert.Equal(t, "/delay", config.Apis["post_api_with_delay_2000"].Path)
@@ -43,6 +45,7 @@ func TestParseConfig(t *testing.T) {
 	assert.Equal(t, "200,201", config.Apis["post_api_with_delay_2000"].AcceptableCodes)
 	assert.Equal(t, 1, config.Apis["post_api_with_delay_2000"].Concurrency)
 	assert.Equal(t, 10, config.Apis["post_api_with_delay_2000"].QueueSize)
+	assert.Equal(t, false, config.Apis["post_api_with_delay_2000"].DisableHystrix)
 }
 
 // servers:
@@ -123,6 +126,13 @@ apis:
     server: testServer
     timeout: "env:int: prod=100; default=1001"
     concurrency: "env:int: prod=11; default=200"
+  delay_timeout_10_POST_disable_hystrix:
+    path: /delay/delay_timeout_10_POST
+    method: POST
+    server: testServer
+    timeout: "env:int: prod=100; default=1001"
+    concurrency: "env:int: prod=11; default=200"
+    disable_hystrix: true
 `
 
 func TestParseConfigWithParameterizedConfig_WithDev(t *testing.T) {
@@ -151,10 +161,19 @@ func TestParseConfigWithParameterizedConfig_WithDev(t *testing.T) {
 	assert.Equal(t, "/delay/delay_timeout_10", api.Path)
 	assert.Equal(t, 1000, api.Timeout)
 	assert.Equal(t, 300, api.Concurrency)
+	assert.False(t, api.DisableHystrix)
 
 	api = config.Apis["delay_timeout_10_POST"]
 	assert.Equal(t, "POST", api.Method)
 	assert.Equal(t, "/delay/delay_timeout_10_POST", api.Path)
 	assert.Equal(t, 1001, api.Timeout)
 	assert.Equal(t, 200, api.Concurrency)
+	assert.False(t, api.DisableHystrix)
+
+	api = config.Apis["delay_timeout_10_POST_disable_hystrix"]
+	assert.Equal(t, "POST", api.Method)
+	assert.Equal(t, "/delay/delay_timeout_10_POST", api.Path)
+	assert.Equal(t, 1001, api.Timeout)
+	assert.Equal(t, 200, api.Concurrency)
+	assert.True(t, api.DisableHystrix)
 }

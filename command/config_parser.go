@@ -108,6 +108,7 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			var retry_initial_wait_time_ms = serialization.ParameterizedValue(valueMap.StringOrDefault("retry_initial_wait_time_ms", "1"))
 			var enable_request_response = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_request_response_logging", "false"))
 			var _enableHttpConnectionTracing = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_http_connection_tracing", "false"))
+			var _enable_hystrix = serialization.ParameterizedValue(valueMap.StringOrDefault("disable_hystrix", "false"))
 
 			if a.Path, err = path.GetString(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing path property for api=%s", name)
@@ -147,6 +148,9 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			}
 			if a.EnableHttpConnectionTracing, err = _enableHttpConnectionTracing.GetBool(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing async property for api=%s", name)
+			}
+			if a.DisableHystrix, err = _enable_hystrix.GetBool(e.Env); err != nil {
+				return errors.Wrap(err, "error is parsing disable_hystrix property for api=%s", name)
 			}
 		}
 	}

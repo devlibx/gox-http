@@ -61,8 +61,8 @@ type Api struct {
 	InterceptorConfig            *interceptor.Config `yaml:"interceptor_config"`
 	EnableRequestResponseLogging bool                `yaml:"enable_request_response_logging"`
 	EnableHttpConnectionTracing  bool                `yaml:"enable_http_connection_tracing"`
+	DisableHystrix               bool                `yaml:"disable_hystrix"`
 	acceptableCodes              []int
-	DisableHystrix               bool
 }
 
 func (a *Api) GetTimeoutWithRetryIncluded() int {
