@@ -1,35 +1,80 @@
-## Gox Http
+# Gox Http
 
-Gox Http provides utility to call a http endpoint. It provides following:
+[![Go Reference](https://pkg.go.dev/badge/github.com/devlibx/gox-http.svg)](https://pkg.go.dev/github.com/devlibx/gox-http)
 
-1. Define all endpoint and api config in configuration file
-2. Circuit breaker using Hystrix
-3. Set concurrency for each api - this ensures that if we go beyond "concurrency" no of parallel requests then hystrix
-   will reject the requests
-4. Set timeout for each api - the call will timeout if this request takes time > timeout defined
-5. acceptable_codes - list of "," separated status codes which are acceptable. These status codes will not be counted as
-   errors and will not open hystrix circuit
+A robust HTTP client library for Go that provides advanced features like circuit breaking, concurrency control, retries, and environment-specific configurations.
 
-#### How to use
+## Key Features
 
-Given below is a example on how to use this liberary
+- 🔧 **Configuration-Driven**: Define all endpoints and API configs in YAML
+- 🛡️ **Circuit Breaking**: Built-in Hystrix support for fault tolerance
+- 🚦 **Concurrency Control**: Set parallel request limits and queue size per API
+- 🎯 **Status Code Handling**: Define acceptable status codes with custom error handling
+- 🔄 **Retry Support**: Configurable retries with custom wait times
+- 📨 **Header Management**: Server-level and API-specific headers with context propagation
+- ⏱️ **Timeout Management**: Configure timeouts at API level
+- 🌍 **Environment Support**: Environment-specific configurations
+- 🔐 **HMAC Authentication**: Built-in HMAC SHA256 validation
+- 🔍 **Request/Response Logging**: Detailed logging capabilities
+- 📡 **Proxy Support**: Configure proxy settings per server
+- 🔒 **TLS Configuration**: Skip certificate verification options
+
+## Installation
+
+```bash
+go get github.com/devlibx/gox-http/v4
+```
+
+## Usage Examples
+
+### Basic Request
 
 ```go
-package main
+request := command.NewGoxRequestBuilder("getPosts").
+    WithContentTypeJson().
+    WithPathParam("id", "123").
+    WithQueryParam("filter", "active").
+    WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
+    Build()
 
-import (
-	"context"
-	"fmt"
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/serialization"
-	goxHttpApi "github.com/devlibx/gox-http/api"
-	"github.com/devlibx/gox-http/command"
-	"log"
-)
+response, err := goxHttpCtx.Execute(context.Background(), "getPosts", request)
+```
 
-// Here you can define your own configuration
-// We have used "jsonplaceholder" as a test server. A api "getPosts" is defined which uses "server=jsonplaceholder"
-var httpConfig = `
+### Async Request
+
+```go
+request := command.NewGoxRequestBuilder("asyncApi").Build()
+responseChannel := goxHttpCtx.ExecuteAsync(context.Background(), "asyncApi", request)
+response := <-responseChannel
+```
+
+### Error Handling
+
+```go
+response, err := goxHttpCtx.Execute(context.Background(), "getPosts", request)
+if err != nil {
+    if goxError, ok := err.(*command.GoxHttpError); ok {
+        switch {
+        case goxError.Is5xx():
+            // Handle 5xx errors
+        case goxError.Is4xx():
+            // Handle 4xx errors
+        case goxError.IsHystrixCircuitOpenError():
+            // Handle circuit breaker open
+        case goxError.IsHystrixTimeoutError():
+            // Handle timeouts
+        case goxError.IsHystrixRejectedError():
+            // Handle rejection due to high concurrency
+        }
+    }
+}
+```
+
+## Configuration Guide
+
+### Complete Example
+
+```yaml
 servers:
   jsonplaceholder:
     host: jsonplaceholder.typicode.com
@@ -37,9 +82,18 @@ servers:
     https: true
     connect_timeout: 1000
     connection_request_timeout: 1000
+    headers:  # Server-level headers
+      Authorization: "Bearer default-token"
+      X-API-Version: "1.0"
+      __UNIQUE_UUID__: true  # Auto-generates unique UUID per request
+    properties:
+      mdc: "trace-id,request-id"  # Propagate context values as headers
   testServer:
     host: localhost
     port: 9123
+    headers:
+      X-Client-ID: "test-client"
+      X-Environment: "local"
 
 apis:
   getPosts:
@@ -48,240 +102,224 @@ apis:
     server: jsonplaceholder
     timeout: 1000
     acceptable_codes: 200,201
+    concurrency: 10  # Max parallel requests
+    queue_size: 100  # Request queue size
+    retry_count: 3
+    retry_initial_wait_time_ms: 100
+    headers:  # API-specific headers (overrides server headers)
+      Content-Type: "application/json"
+      X-Custom-Header: "custom-value"
   delay_timeout_10:
     path: /delay
     server: testServer
     timeout: 10
-    concurrency: 3 
-`
-
-func main() {
-
-	cf := gox.NewCrossFunction()
-
-	// Read config and
-	config := command.Config{}
-	err := serialization.ReadYamlFromString(httpConfig, &config)
-	if err != nil {
-		log.Println("got error in reading config", err)
-		return
-	}
-
-	// Setup goHttp context
-	goxHttpCtx, err := goxHttpApi.NewGoxHttpContext(cf, &config)
-	if err != nil {
-		log.Println("got error in creating gox http context config", err)
-		return
-	}
-
-	// Make a http call and get the result
-	// 	ResponseBuilder - this is used to convert json response to your custom object
-	//
-	//  The following interface can be implemented to convert from bytes to the desired output.
-	//  response.Response will hold the object which is returned from  ResponseBuilder
-	//
-	//	type ResponseBuilder interface {
-	//		Response(data []byte) (interface{}, error)
-	//	}
-	request := command.NewGoxRequestBuilder("getPosts").
-		WithContentTypeJson().
-		WithPathParam("id", 1).
-		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
-		Build()
-	response, err := goxHttpCtx.Execute(context.Background(), "getPosts", request)
-	if err != nil {
-
-		// Error details can be extracted from *command.GoxHttpError
-		if goxError, ok := err.(*command.GoxHttpError); ok {
-			if goxError.Is5xx() {
-				fmt.Println("got 5xx error")
-			} else if goxError.Is4xx() {
-				fmt.Println("got 5xx error")
-			} else if goxError.IsBadRequest() {
-				fmt.Println("got bad request error")
-			} else if goxError.IsHystrixCircuitOpenError() {
-				fmt.Println("hystrix circuit is open due to many errors")
-			} else if goxError.IsHystrixTimeoutError() {
-				fmt.Println("hystrix timeout because http call took longer then configured")
-			} else if goxError.IsHystrixRejectedError() {
-				fmt.Println("hystrix rejected the request because too many concurrent request are made")
-			} else if goxError.IsHystrixError() {
-				fmt.Println("hystrix error - timeout/circuit open/rejected")
-			}
-
-		} else {
-			fmt.Println("got unknown error")
-		}
-
-	} else {
-		fmt.Println(serialization.Stringify(response.Response))
-		// {some json response ...}
-	}
-}
-
+    concurrency: 3
+    headers:
+      Authorization: "Bearer specific-token"  # Override server's auth token
 ```
-
-#### Retry Handling
-
-You can specify following properties in a API to enable a retry.
-
-1. retry_count - how many times you want to retry
-2. retry_initial_wait_time_ms - a delay before making a retry
-3. NOTE - the total Hystrix timeout will be set to (timeout + (retry_count * timeout) + retry_initial_wait_time_ms)
-   <br> Timeout is the time taken by a single call. So the total time is adjusted to cover retries
-4. If response from a server is an acceptable code then retry will not be done e.g. in this case status=404 will not
-   trigger a retry.
-
-```yaml
-apis:
-  getPosts:
-    method: GET
-    path: /posts/{id}
-    server: jsonplaceholder
-    timeout: 1000
-    acceptable_codes: 200,201,404
-    retry_count: 3
-    retry_initial_wait_time_ms: 10
-```
-----
-## Environment Specific Configs Support
-You can setup all properties with env specific values
-1. env = name of the env (default=prod). This is used to find the values for all properties
-2. add "env: " in front of all values to make it configurable
-3. setup env specific configs
-4. <b> Note - You must use serialization.ReadParameterizedYaml() method if you uses parameterized yaml</b>
-```yaml
-host: "env:string: prod=localhost.prod; dev=localhost.dev; stage=localhost.stage"
-```
-Here host value will be based on the "env" you have provided in a config. For example host will be 
-"localhost.prod" if env=prod, or host="localhost.stage" if env=stage"
-4. Default: You can sprcify "default" - if no value match this will be used
-<br>
-   e.g. ```port: "env:int: prod=443; default=8080"``` dev/stage/any other will pick port=8080. Only prod will use 443 
-
-
-```yaml
-env: dev
-
-servers:
-  jsonplaceholder:
-    host: "env:string: prod=jsonplaceholder.typicode.com; stage=localhost.stage; default=localhost.dev"
-    port: "env:int: prod=443; default=8080"
-    https: true
-    connect_timeout: "env:int: prod=10; default=1000"
-    connection_request_timeout: "env:int: prod=11; default=1001"
-  testServer:
-    host: "env:string: prod=localhost.prod; dev=localhost.dev; stage=localhost.stage"
-    port: 9123
-    https: "env:int: prod=true; dev=false; stage=false"
-
-apis:
-  delay_timeout_10:
-    path: /delay/delay_timeout_10
-    server: testServer
-    timeout: "env:int: prod=10; default=1000"
-    concurrency: "env:int: prod=10; default=300"
-  delay_timeout_10_POST:
-    path: /delay/delay_timeout_10_POST
-    method: POST
-    server: testServer
-    timeout: "env:int: prod=100; default=1001"
-    concurrency: "env:int: prod=11; default=200"
-```
----
-
-### How to add or update a new API dynamically
-NOTE - we only support adding new API (new server has not be done manually)
 
 ```go
-// Load config from test_config_real_server.yaml example file
-config := command.Config{}
-err := serialization.ReadYamlFromString(testhelper.TestConfigWithRealServer, &config)
-	
-// Suppose a API "delay_timeout_10" was using a path "/delay", and you want to chnage it to point to "/delay_new"
-// Update the config and reload API
-config.Apis["delay_timeout_10"].Path = "/delay_new"
-err = goxHttpCtx.ReloadApi("delay_timeout_10")
+package main
 
+import (
+    "context"
+    "fmt"
+    "github.com/devlibx/gox-base"
+    "github.com/devlibx/gox-base/serialization"
+    goxHttpApi "github.com/devlibx/gox-http/v4/api"
+    "github.com/devlibx/gox-http/v4/command"
+    "log"
+)
 
-// Add a new API inimically
+func main() {
+    cf := gox.NewCrossFunction()
+
+    // Read config
+    config := command.Config{}
+    err := serialization.ReadYamlFromString(httpConfig, &config)
+    if err != nil {
+        log.Println("got error in reading config", err)
+        return
+    }
+
+    // Setup goHttp context
+    goxHttpCtx, err := goxHttpApi.NewGoxHttpContext(cf, &config)
+    if err != nil {
+        log.Println("got error in creating gox http context config", err)
+        return
+    }
+
+    // Make a http call and get the result
+    request := command.NewGoxRequestBuilder("getPosts").
+        WithContentTypeJson().
+        WithPathParam("id", 1).
+        WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
+        Build()
+    response, err := goxHttpCtx.Execute(context.Background(), "getPosts", request)
+    if err != nil {
+        fmt.Println("got error", err)
+        return
+    }
+    fmt.Println(serialization.Stringify(response.Response))
+}
+```
+
+### Server Configuration
+
+#### Server Configuration Properties
+
+| Property | Description | Default | Required |
+|----------|-------------|---------|----------|
+| host | Server hostname | - | Yes |
+| port | Server port | - | Yes |
+| https | Use HTTPS | false | No |
+| proxy_url | Proxy server URL | - | No |
+| skip_cert_verify | Skip TLS verification | false | No |
+| connect_timeout | Connection timeout (ms) | 1000 | No |
+| connection_request_timeout | Request timeout (ms) | 1000 | No |
+| enable_http_connection_tracing | Enable connection tracing | false | No |
+| headers | Server-level headers | - | No |
+| properties | Custom properties map | - | No |
+| interceptor_config | Interceptor configuration | - | No |
+
+### Header Management
+
+Headers can be configured at both server and API levels, with API-level headers taking precedence over server-level headers.
+
+#### Server-Level Headers
+```yaml
+servers:
+  my_server:
+    headers:
+      Authorization: "Bearer ${TOKEN}"  # Static header
+      __UNIQUE_UUID__: true  # Auto-generated UUID per request
+      X-API-Version: "2.0"  # Version header
+    properties:
+      mdc: "trace-id,request-id,correlation-id"  # Context propagation
+```
+
+#### API-Level Headers
+```yaml
+apis:
+  get_user:
+    method: GET
+    path: /users/{id}
+    server: my_server
+    timeout: 1000
+    concurrency: 10
+    acceptable_codes: "200,201,404"
+    retry_count: 3
+    retry_initial_wait_time_ms: 100
+    headers:  # Override or add to server headers
+      Content-Type: "application/json"
+      Authorization: "Bearer ${API_TOKEN}"  # Override server's auth
+      X-Operation-ID: "get-user"  # API-specific header
+```
+
+#### Header Features
+- **Server-Level Default Headers**: Set default headers for all APIs using a server
+- **API-Level Overrides**: Override or add to server headers for specific APIs
+- **Special Headers**:
+  - `__UNIQUE_UUID__`: Set to `true` to auto-generate a unique UUID for each request
+  - `Content-Type`: Defaults to `application/json` if not specified
+- **Context Propagation**: Use `mdc` property to automatically propagate context values as headers
+- **Dynamic Headers**: Headers can be added/modified programmatically:
+```go
+request := command.NewGoxRequestBuilder("getPosts").
+    WithHeader("X-Custom-Header", "custom-value").
+    WithHeader("Authorization", fmt.Sprintf("Bearer %s", token)).
+    Build()
+```
+
+### API Configuration
+```yaml
+apis:
+  get_user:
+    method: GET
+    path: /users/{id}
+    server: my_server
+    timeout: 1000
+    concurrency: 10
+    acceptable_codes: "200,201,404"
+    retry_count: 3
+    retry_initial_wait_time_ms: 100
+    headers:
+      Content-Type: "application/json"
+```
+
+#### API Configuration Properties
+
+| Property | Description | Default | Required |
+|----------|-------------|---------|----------|
+| method | HTTP method (GET/POST/etc) | GET | No |
+| path | API endpoint path | - | Yes |
+| server | Server reference | - | Yes |
+| timeout | Request timeout (ms) | 1000 | No |
+| concurrency | Max parallel requests | 10 | No |
+| queue_size | Request queue size | 100 | No |
+| async | Enable async execution | false | No |
+| acceptable_codes | Acceptable HTTP status codes | "200" | No |
+| retry_count | Number of retries | 0 | No |
+| retry_initial_wait_time_ms | Initial retry wait time (ms) | 0 | No |
+| enable_request_response_logging | Enable request/response logging | false | No |
+| enable_http_connection_tracing | Enable connection tracing | false | No |
+| disable_hystrix | Disable circuit breaker | false | No |
+| headers | API-specific headers | - | No |
+| interceptor_config | API-level interceptor config | - | No |
+
+### Environment-Specific Configuration
+
+Support for environment-specific values using the `env` prefix:
+
+```yaml
+env: dev  # Environment selector (default: prod)
+
+servers:
+  api:
+    host: "env:string: prod=api.prod.com; dev=api.dev.com; default=api.local"
+    port: "env:int: prod=443; default=8080"
+    https: "env:bool: prod=true; default=false"
+    connect_timeout: "env:int: prod=1000; dev=2000; default=5000"
+```
+
+### HMAC Authentication
+
+Configure HMAC SHA256 validation at server or API level:
+
+```yaml
+interceptor_config:
+  hmac_config:
+    key: "your-secret-key"
+    hash_header_key: "X-Hash-Code"
+    timestamp_header_key: "X-Timestamp"
+    headers_to_include_in_signature: 
+      - "x-custom-header"
+    convert_header_keys_to_lower_case: true
+```
+
+### Dynamic API Updates
+
+```go
+// Update existing API
+config.Apis["existing_api"].Path = "/new_path"
+err = goxHttpCtx.ReloadApi("existing_api")
+
+// Add new API
 config.Apis["new_api"] = &command.Api{
     Name:        "new_api",
     Method:      "GET",
-    Path:        "/bad_new",
+    Path:        "/new_endpoint",
     Server:      "testServer",
     Timeout:     100,
     Concurrency: 10,
-    QueueSize:   10,
 }
 err = goxHttpCtx.ReloadApi("new_api")
-
-request = command.NewGoxRequestBuilder("new_api").
-                WithContentTypeJson().
-               WithPathParam("id", 1).
-               WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
-               Build()
-response, err = goxHttpCtx.Execute(ctx, "new_api", request)
-assert.NoError(t, err)
-assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
-assert.Equal(t, "/bad_new", response.AsStringObjectMapOrEmpty().StringOrEmpty("url"))
-
 ```
 
-### Enable HmacSha256 validation
-1. interceptor_config.hmac_config => set this up to use HMAC SHA256
-2. key => secret key to use for HMAC
-3. hash_header_key => Hash will be calculated and will be passed with this header key
-4. timestamp_header_key => timestamp will be passed with this header key
-5. headers_to_include_in_signature => list of headers which will be included in signature calculation
-6. convert_header_keys_to_lower_case => if true then all header keys will be converted to lower case before calculating signature
-```yaml
-servers:
-  jsonplaceholder:
-    host: jsonplaceholder.typicode.com
-    port: 443
-    https: true
-    interceptor_config:
-       hmac_config:
-          key: <some secret>
-          hash_header_key: X-Hash-code-sha
-          timestamp_header_key: X-Time
-          headers_to_include_in_signature: [x-header-1, x-header-2]
-          convert_header_keys_to_lower_case: true
-```
+## Contributing
 
-#### Error Handling
-You can register `RequestValidatorErrorHandlingMiddleware` in your router to get common error handler for bad request.
-```go
-type User struct {
-    Name       string   `json:"name" binding:"required,max=10"`
-    Email      string   `json:"email" binding:"required,email"`
-    Address    Address  `json:"address" binding:"required"`
-    AddressPtr *Address `json:"address_ptr" binding:"required"`
-}
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-type Address struct {
-    FlatNo int `json:"flat_no" binding:"required"`
-}
+## License
 
-// Register middleware to handle bad request
-r := gin.Default()
-r.Use(RequestValidatorErrorHandlingMiddleware(DoNotSkipRequestValidationFunc, nil))
-
-// Use this middleware to handle error 
-var user User
-if err := c.ShouldBindJSON(&user); err != nil {
-    _ = c.AbortWithError(http.StatusBadRequest, err)
-}
-```
-
-```json
-{
-    "status": 400,
-    "error_mapping_info": {
-        "User.Address.FlatNo": "Error:Field validation for 'FlatNo' failed on the 'required' tag",
-        "User.AddressPtr": "Error:Field validation for 'AddressPtr' failed on the 'required' tag",
-        "User.Email": "Error:Field validation for 'Email' failed on the 'required' tag"
-    }
-}
-```
+This project is licensed under the MIT License - see the LICENSE file for details.
