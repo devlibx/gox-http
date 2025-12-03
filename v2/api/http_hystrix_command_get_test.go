@@ -8,6 +8,7 @@ import (
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/serialization"
 	"github.com/devlibx/gox-base/test"
+	errors2 "github.com/devlibx/gox-base/v2/errors"
 	"github.com/devlibx/gox-http/v2/command"
 	httpCommand "github.com/devlibx/gox-http/v2/command/http"
 	"github.com/devlibx/gox-http/v2/testhelper"
@@ -198,9 +199,18 @@ func Test_Hystrix_Get_With_Acceptable_Status_Code(t *testing.T) {
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
 	response, err := goxHttpCtx.Execute(ctx, request)
-	assert.NoError(t, err)
-	assert.Equal(t, 401, response.StatusCode)
-	assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
+	if httpCommand.EnableDoNotOpenHystrixOnAcceptableErrorCodes {
+		assert.Error(t, err)
+		if e, ok := errors2.AsTyped[*command.GoxHttpError](err); ok {
+			assert.Equal(t, 401, e.StatusCode)
+		} else {
+			assert.Fail(t, "expected GoxHttpError error")
+		}
+	} else {
+		assert.NoError(t, err)
+		assert.Equal(t, 401, response.StatusCode)
+		assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
+	}
 }
 
 func Test_Hystrix_Get_With_Unacceptable_Status_Code(t *testing.T) {
@@ -279,15 +289,14 @@ func Test_Hystrix_Get_Verify_Circuit_Will_Open_On_Too_ManyErrors(t *testing.T) {
 			Build()
 		_, err = goxHttpCtx.Execute(ctx, request)
 		assert.Error(t, err)
-		if e, ok := err.(*command.GoxHttpError); ok {
+		var e *command.GoxHttpError
+		if errors.As(err, &e) {
 			if e.IsHystrixCircuitOpenError() {
 				atomic.AddInt32(&errorCount, 1)
 			}
-		} else {
-			assert.Fail(t, "expected error as command.GoxHttpError")
 		}
 	}
-	assert.True(t, errorCount > 100)
+	assert.True(t, errorCount > 100, fmt.Sprintf("errorCount=%v but expected > 100", errorCount))
 	fmt.Println(errorCount)
 }
 

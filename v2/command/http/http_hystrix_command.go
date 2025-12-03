@@ -8,6 +8,7 @@ import (
 	"github.com/afex/hystrix-go/hystrix"
 	"github.com/devlibx/gox-base"
 	goxError "github.com/devlibx/gox-base/errors"
+	errors3 "github.com/devlibx/gox-base/v2/errors"
 	"github.com/devlibx/gox-http/v2/command"
 	"github.com/go-resty/resty/v2"
 	"github.com/opentracing/opentracing-go"
@@ -15,6 +16,7 @@ import (
 	"net/http"
 )
 
+var EnableDoNotOpenHystrixOnAcceptableErrorCodes = false
 var HystrixConfigMap = gox.StringObjectMap{}
 
 type HttpHystrixCommand struct {
@@ -49,6 +51,42 @@ type result struct {
 }
 
 func (h *HttpHystrixCommand) Execute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error) {
+	if EnableDoNotOpenHystrixOnAcceptableErrorCodes {
+		return h.withEnableDoNotOpenHystrixOnAcceptableErrorCodesExecute(ctx, request)
+	} else {
+		return h.withoutEnableDoNotOpenHystrixOnAcceptableErrorCodesExecute(ctx, request)
+	}
+}
+
+func (h *HttpHystrixCommand) withEnableDoNotOpenHystrixOnAcceptableErrorCodesExecute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error) {
+	r := &result{}
+	if err := hystrix.Do(h.hystrixCommandName, func() error {
+		r.response, r.err = h.command.Execute(ctx, request)
+		h.logHystrixError(ctx, request, r.err)
+
+		// If this is the error from server and not acceptable code then return error
+
+		if ge, ok := errors3.AsTyped[*command.GoxHttpError](r.err); ok {
+			if ge.ErrorCode == "server_response_with_error" {
+				// Why - this will enable hystrix to open circuit on non-acceptable error code
+				return r.err
+			} else if ge.ErrorCode == "failed_to_call_api_with_acceptable_error_code" {
+				// Why - this will enable hystrix to NOT open circuit on acceptable error code
+				return nil
+			}
+		}
+
+		return r.err
+	}, nil); err != nil {
+		h.logHystrixError(ctx, request, err)
+		return r.response, h.errorCreator(err)
+	} else {
+		h.logHystrixError(ctx, request, r.err)
+		return r.response, r.err
+	}
+}
+
+func (h *HttpHystrixCommand) withoutEnableDoNotOpenHystrixOnAcceptableErrorCodesExecute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error) {
 	r := &result{}
 	if err := hystrix.Do(h.hystrixCommandName, func() error {
 		r.response, r.err = h.command.Execute(ctx, request)

@@ -424,6 +424,20 @@ func (h *HttpCommand) processResponse(request *command.GoxRequest, response *res
 							Body:       response.Body(),
 						},
 					}
+				} else {
+					if EnableDoNotOpenHystrixOnAcceptableErrorCodes {
+						return &command.GoxResponse{
+							Body:       response.Body(),
+							StatusCode: response.StatusCode(),
+							Err: &command.GoxHttpError{
+								Err:        errors.New("got error in making call to server=%s, api=%s", h.server.Name, h.api.Name),
+								StatusCode: response.StatusCode(),
+								Message:    fmt.Sprintf("got error in making call to server=%s, api=%s", h.server.Name, h.api.Name),
+								ErrorCode:  "failed_to_call_api_with_acceptable_error_code",
+								Body:       response.Body(),
+							},
+						}
+					}
 				}
 			}
 		} else {

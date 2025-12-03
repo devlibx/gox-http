@@ -35,7 +35,7 @@ func (e *GoxHttpError) Error() string {
 		return fmt.Sprintf("statusCode=%d, message=%s, body=%s, errorCode=%s, err=%v", e.StatusCode, e.Message, body, e.ErrorCode, e.Err)
 	} else if !util.IsStringEmpty(e.Message) {
 		return fmt.Sprintf("statusCode=%d, message=%s, body=%s, err=%v", e.StatusCode, e.Message, body, e.Err)
-	} else if !util.IsStringEmpty(e.Message) {
+	} else if !util.IsStringEmpty(e.ErrorCode) {
 		return fmt.Sprintf("statusCode=%d, body=%s, errorCode=%s, err=%v", e.StatusCode, body, e.ErrorCode, e.Err)
 	} else {
 		return fmt.Sprintf("statusCode=%d, body=%s, err=%v", e.StatusCode, body, e.Err)

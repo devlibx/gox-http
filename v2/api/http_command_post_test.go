@@ -6,7 +6,9 @@ import (
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/serialization"
 	"github.com/devlibx/gox-base/test"
+	"github.com/devlibx/gox-base/v2/errors"
 	"github.com/devlibx/gox-http/v2/command"
+	httpCommand "github.com/devlibx/gox-http/v2/command/http"
 	"github.com/devlibx/gox-http/v2/testhelper"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
@@ -159,9 +161,18 @@ func Test_Post_With_Acceptable_Status_Code(t *testing.T) {
 		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
 		Build()
 	response, err := goxHttpCtx.Execute(ctx, request)
-	assert.NoError(t, err)
-	assert.Equal(t, 401, response.StatusCode)
-	assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
+	if httpCommand.EnableDoNotOpenHystrixOnAcceptableErrorCodes {
+		assert.Error(t, err)
+		if e, ok := errors.AsTyped[*command.GoxHttpError](err); ok {
+			assert.Equal(t, 401, e.StatusCode)
+		} else {
+			assert.Fail(t, "expected GoxHttpError error")
+		}
+	} else {
+		assert.NoError(t, err)
+		assert.Equal(t, 401, response.StatusCode)
+		assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
+	}
 }
 
 func Test_Post_With_Unacceptable_Status_Code(t *testing.T) {

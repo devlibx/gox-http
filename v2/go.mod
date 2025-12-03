@@ -1,10 +1,11 @@
 module github.com/devlibx/gox-http/v2
 
-go 1.21
+go 1.22
 
 require (
 	github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5
 	github.com/devlibx/gox-base v0.0.140
+	github.com/devlibx/gox-base/v2 v2.0.32
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-json-experiment/json v0.0.0-20240412061110-8868a69194fa
 	github.com/go-resty/resty/v2 v2.7.0
@@ -12,7 +13,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.9.0
 	github.com/veqryn/slog-json v0.3.0
 	go.uber.org/zap v1.23.0
 )
