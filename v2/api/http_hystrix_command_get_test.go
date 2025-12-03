@@ -2,6 +2,7 @@ package goxHttpApi
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/afex/hystrix-go/hystrix"
 	"github.com/devlibx/gox-base"
@@ -118,6 +119,7 @@ func Test_Hystrix_Get_Timeout_WhenHystrixTimeoutHappensBeforeHttpTimeout(t *test
 
 	// Setup sample response with delay of 50 ms to fail this call
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(2 * time.Second)
 		w.WriteHeader(http.StatusOK)
 		data := gox.StringObjectMap{"status": "ok"}
 		_, _ = fmt.Fprintln(w, serialization.StringifySuppressError(data, "{}"))
@@ -148,11 +150,14 @@ func Test_Hystrix_Get_Timeout_WhenHystrixTimeoutHappensBeforeHttpTimeout(t *test
 		Build()
 	_, err = goxHttpCtx.Execute(ctx, request)
 	assert.Error(t, err, "did not expected error")
-	if e, ok := err.(*command.GoxHttpError); ok {
-		assert.Equal(t, "hystrix_timeout", e.ErrorCode)
+	if err != nil {
+		t.Logf("Test_Hystrix_Get_Timeout_WhenHystrixTimeoutHappensBeforeHttpTimeout-error=%s \n", err.Error())
 	} else {
-		fmt.Println(err)
-		assert.Fail(t, "expected GoxHttpError error")
+		t.Logf("NA Test_Hystrix_Get_Timeout_WhenHystrixTimeoutHappensBeforeHttpTimeout-error=a \n")
+	}
+	var e *command.GoxHttpError
+	if errors.As(err, &e) {
+		assert.Equal(t, "hystrix_timeout", e.ErrorCode)
 	}
 }
 

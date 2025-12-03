@@ -58,6 +58,10 @@ type Api struct {
 	EnableHttpConnectionTracing  bool                `yaml:"enable_http_connection_tracing"`
 	acceptableCodes              []int
 	DisableHystrix               bool
+
+	HystrixRequestVolumeThreshold int `json:"hystrix_request_volume_threshold"`
+	HystrixSleepWindow            int `json:"hystrix_sleep_window"`
+	HystrixErrorPercentThreshold  int `json:"hystrix_error_percent_threshold"`
 }
 
 func (a *Api) GetTimeoutWithRetryIncluded() int {

@@ -15,3 +15,9 @@ apis:
     server: testServer
     timeout: 10
     concurrency: 3
+  delay_timeout_large_request_volume_threshold_10:
+    path: /delay
+    server: testServer
+    timeout: 10
+    concurrency: 3
+    hystrix_request_volume_threshold: 10000

@@ -101,6 +101,10 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			var enable_request_response = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_request_response_logging", "false"))
 			var _enableHttpConnectionTracing = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_http_connection_tracing", "false"))
 
+			var hystrix_request_volume_threshold = serialization.ParameterizedValue(valueMap.StringOrDefault("hystrix_request_volume_threshold", "20"))
+			var hystrix_sleep_window = serialization.ParameterizedValue(valueMap.StringOrDefault("hystrix_sleep_window", "5000"))
+			var hystrix_error_percent_threshold = serialization.ParameterizedValue(valueMap.StringOrDefault("hystrix_error_percent_threshold", "50"))
+
 			if a.Path, err = path.GetString(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing path property for api=%s", name)
 			}
@@ -124,6 +128,15 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			}
 			if a.RetryCount, err = retry_count.GetInt(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing retry_count property for api=%s", name)
+			}
+			if a.HystrixRequestVolumeThreshold, err = hystrix_request_volume_threshold.GetInt(e.Env); err != nil {
+				return errors.Wrap(err, "error is parsing hystrix_request_volume_threshold property for api=%s", name)
+			}
+			if a.HystrixSleepWindow, err = hystrix_sleep_window.GetInt(e.Env); err != nil {
+				return errors.Wrap(err, "error is parsing hystrix_sleep_window property for api=%s", name)
+			}
+			if a.HystrixErrorPercentThreshold, err = hystrix_error_percent_threshold.GetInt(e.Env); err != nil {
+				return errors.Wrap(err, "error is parsing hystrix_error_percent_threshold property for api=%s", name)
 			}
 			if a.InitialRetryWaitTimeMs, err = retry_initial_wait_time_ms.GetInt(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing retry_initial_wait_time_ms property for api=%s", name)
