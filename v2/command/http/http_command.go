@@ -4,6 +4,13 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"net"
+	"net/http"
+	"net/http/httptrace"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/serialization"
@@ -14,12 +21,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
-	"net"
-	"net/http"
-	"net/http/httptrace"
-	"strings"
-	"sync"
-	"time"
 )
 
 var EnableGoxHttpMetricLogging = false
@@ -82,9 +83,9 @@ func (h *HttpCommand) Execute(ctx context.Context, request *command.GoxRequest) 
 	if EnableGoxHttpMetricLogging {
 		if err == nil {
 			if response == nil {
-				h.Metric().Tagged(map[string]string{"server": h.server.Name, "api": h.api.Name, "status": fmt.Sprintf("%d", 200)}).Counter("gox_http_call").Inc(1)
+				h.Metric().Tagged(map[string]string{"server": h.server.Name, "api": h.api.Name, "status": fmt.Sprintf("%d", 200), "error": ""}).Counter("gox_http_call").Inc(1)
 			} else {
-				h.Metric().Tagged(map[string]string{"server": h.server.Name, "api": h.api.Name, "status": fmt.Sprintf("%d", response.StatusCode)}).Counter("gox_http_call").Inc(1)
+				h.Metric().Tagged(map[string]string{"server": h.server.Name, "api": h.api.Name, "status": fmt.Sprintf("%d", response.StatusCode), "error": ""}).Counter("gox_http_call").Inc(1)
 			}
 		} else {
 			if goxErr, ok := err.(*command.GoxHttpError); ok {
