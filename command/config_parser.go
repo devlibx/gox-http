@@ -152,6 +152,14 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			if a.DisableHystrix, err = _enable_hystrix.GetBool(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing disable_hystrix property for api=%s", name)
 			}
+			if m, ok := valueMap["headers"].(map[string]interface{}); ok {
+				a.Headers = make(map[string]string)
+				for k, v := range m {
+					if str, ok := v.(string); ok {
+						a.Headers[k] = str
+					}
+				}
+			}
 		}
 	}
 
