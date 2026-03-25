@@ -140,8 +140,16 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			if a.EnableHttpConnectionTracing, err = _enableHttpConnectionTracing.GetBool(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing async property for api=%s", name)
 			}
-		}
+			if m, ok := valueMap["headers"].(map[string]interface{}); ok {
+				a.Headers = make(map[string]string)
+				for k, v := range m {
+					if str, ok := v.(string); ok {
+						a.Headers[k] = str
+					}
+				}
+			}
 	}
+}
 
 	return nil
 }
