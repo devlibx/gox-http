@@ -1,13 +1,11 @@
 module github.com/devlibx/gox-http
 
-go 1.21
-
-toolchain go1.22.2
+go 1.23.0
 
 require (
 	github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5
 	github.com/devlibx/gox-base v0.0.140
-	github.com/go-resty/resty/v2 v2.7.0
+	github.com/go-resty/resty/v2 v2.17.2
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.2.0
 	github.com/opentracing/opentracing-go v1.2.0
@@ -25,6 +23,6 @@ require (
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/net v0.43.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
