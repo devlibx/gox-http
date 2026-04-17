@@ -87,6 +87,9 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			var acceptable_codes = serialization.ParameterizedValue(valueMap.StringOrDefault("acceptable_codes", "200,201"))
 			var retry_count = serialization.ParameterizedValue(valueMap.StringOrDefault("retry_count", "0"))
 			var retry_initial_wait_time_ms = serialization.ParameterizedValue(valueMap.StringOrDefault("retry_initial_wait_time_ms", "1"))
+			var error_percent_threshold = serialization.ParameterizedValue(valueMap.StringOrDefault("error_percent_threshold", "25"))
+			var sleep_window_in_millis = serialization.ParameterizedValue(valueMap.StringOrDefault("sleep_window_in_millis", "5000"))
+			var request_volume_threshold = serialization.ParameterizedValue(valueMap.StringOrDefault("request_volume_threshold", "20"))
 
 			if a.Path, err = path.GetString(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing path property for api=%s", name)
@@ -114,6 +117,15 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			}
 			if a.InitialRetryWaitTimeMs, err = retry_initial_wait_time_ms.GetInt(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing retry_initial_wait_time_ms property for api=%s", name)
+			}
+			if a.ErrorPercentThreshold, err = error_percent_threshold.GetInt(e.Env); err != nil {
+				return errors.Wrap(err, "error is parsing error_percent_threshold property for api=%s", name)
+			}
+			if a.SleepWindowInMillis, err = sleep_window_in_millis.GetInt(e.Env); err != nil {
+				return errors.Wrap(err, "error is parsing sleep_window_in_millis property for api=%s", name)
+			}
+			if a.RequestVolumeThreshold, err = request_volume_threshold.GetInt(e.Env); err != nil {
+				return errors.Wrap(err, "error is parsing request_volume_threshold property for api=%s", name)
 			}
 		}
 	}

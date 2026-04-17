@@ -179,9 +179,11 @@ func NewHttpHystrixCommand(cf gox.CrossFunction, server *command.Server, api *co
 	}
 
 	hystrix.ConfigureCommand(commandName, hystrix.CommandConfig{
-		Timeout:               timeout,
-		MaxConcurrentRequests: api.Concurrency,
-		ErrorPercentThreshold: 25,
+		Timeout:                timeout,
+		MaxConcurrentRequests:  api.Concurrency,
+		ErrorPercentThreshold:  api.ErrorPercentThreshold,
+		SleepWindow:            api.SleepWindowInMillis,
+		RequestVolumeThreshold: api.RequestVolumeThreshold,
 	})
 
 	return c, nil

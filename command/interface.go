@@ -47,11 +47,14 @@ type Api struct {
 	QueueSize              int               `yaml:"queue_size"`
 	Async                  bool              `yaml:"async"`
 	AcceptableCodes        string            `yaml:"acceptable_codes"`
-	RetryCount             int               `yaml:"retry_count"`
-	InitialRetryWaitTimeMs int               `yaml:"retry_initial_wait_time_ms"`
-	Headers                map[string]string `yaml:"headers"`
-	acceptableCodes        []int
-	DisableHystrix         bool
+	RetryCount              int               `yaml:"retry_count"`
+	InitialRetryWaitTimeMs  int               `yaml:"retry_initial_wait_time_ms"`
+	Headers                 map[string]string `yaml:"headers"`
+	ErrorPercentThreshold   int               `yaml:"error_percent_threshold"`
+	SleepWindowInMillis     int               `yaml:"sleep_window_in_millis"`
+	RequestVolumeThreshold  int               `yaml:"request_volume_threshold"`
+	acceptableCodes         []int
+	DisableHystrix          bool
 }
 
 func (a *Api) GetTimeoutWithRetryIncluded() int {
