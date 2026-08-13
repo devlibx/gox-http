@@ -109,6 +109,7 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			var enable_request_response = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_request_response_logging", "false"))
 			var _enableHttpConnectionTracing = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_http_connection_tracing", "false"))
 			var _enable_hystrix = serialization.ParameterizedValue(valueMap.StringOrDefault("disable_hystrix", "false"))
+			var _enable_idle_connection = serialization.ParameterizedValue(valueMap.StringOrDefault("enable_idle_connection", "false"))
 
 			if a.Path, err = path.GetString(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing path property for api=%s", name)
@@ -151,6 +152,9 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			}
 			if a.DisableHystrix, err = _enable_hystrix.GetBool(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing disable_hystrix property for api=%s", name)
+			}
+			if a.EnableIdleConnection, err = _enable_idle_connection.GetBool(e.Env); err != nil {
+				return errors.Wrap(err, "error is parsing enable_idle_connection property for api=%s", name)
 			}
 		}
 	}

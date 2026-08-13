@@ -62,6 +62,7 @@ type Api struct {
 	EnableRequestResponseLogging bool                `yaml:"enable_request_response_logging"`
 	EnableHttpConnectionTracing  bool                `yaml:"enable_http_connection_tracing"`
 	DisableHystrix               bool                `yaml:"disable_hystrix"`
+	EnableIdleConnection         bool                `yaml:"enable_idle_connection"`
 	acceptableCodes              []int
 }
 

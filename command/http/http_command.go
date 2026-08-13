@@ -485,6 +485,17 @@ func NewHttpCommand(cf gox.CrossFunction, server *command.Server, api *command.A
 	var client *resty.Client
 	if server.ProxyUrl == "" {
 		client = resty.New()
+		if api.EnableIdleConnection {
+			client.SetTransport(&http.Transport{
+				Proxy:               http.ProxyFromEnvironment, // same as resty's default
+				DialContext:         (&net.Dialer{Timeout: 30 * time.Second, KeepAlive: 30 * time.Second}).DialContext,
+				ForceAttemptHTTP2:   true,
+				MaxIdleConns:        api.Concurrency,
+				MaxIdleConnsPerHost: api.Concurrency,
+				IdleConnTimeout:     90 * time.Second,
+				TLSHandshakeTimeout: 10 * time.Second,
+			})
+		}
 	} else {
 		if proxyURL, err := url.Parse(server.ProxyUrl); err != nil {
 			return nil, errors.Wrap(err, "failed to parse proxy url: url=%s", server.ProxyUrl)
